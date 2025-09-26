@@ -21,7 +21,7 @@ interface Product {
   }
 }
 
-export default function EditProductPage({ params }: { params: { id: string } }) {
+export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -42,7 +42,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await fetch(`/api/products/${params.id}`)
+        const resolvedParams = await params
+        const response = await fetch(`/api/products/${resolvedParams.id}`)
         if (response.ok) {
           const data = await response.json()
           setProduct(data)
@@ -70,7 +71,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     }
 
     fetchProduct()
-  }, [params.id, router])
+  }, [params, router])
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,7 +79,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     setSaving(true)
 
     try {
-      const response = await fetch(`/api/products/${params.id}`, {
+      const resolvedParams = await params
+      const response = await fetch(`/api/products/${resolvedParams.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
