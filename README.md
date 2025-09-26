@@ -5,7 +5,30 @@ Sistema de cadastro de produtos para bar desenvolvido com Next.js, Prisma e Post
 ## Deploy Status
 - ✅ Código corrigido e pronto para deploy
 - ✅ Erros de TypeScript/ESLint resolvidos
-- ✅ Commit: bf332b0
+- ✅ Commit: 294a43a
+- ⚠️ **Configurar variáveis de ambiente no Vercel**
+
+### Variáveis de Ambiente Necessárias no Vercel
+
+Configure as seguintes variáveis no painel do Vercel:
+
+```bash
+# Database (use uma URL de PostgreSQL em produção)
+DATABASE_URL="postgresql://username:password@host:port/database?schema=public"
+
+# NextAuth (OBRIGATÓRIO)
+NEXTAUTH_URL="https://seu-dominio.vercel.app"
+NEXTAUTH_SECRET="uma-chave-secreta-muito-longa-e-aleatoria"
+
+# App
+NEXT_PUBLIC_APP_NAME="Cadastro do Pedro"
+```
+
+**Como configurar:**
+1. Acesse o painel do Vercel
+2. Vá em Settings → Environment Variables
+3. Adicione cada variável acima
+4. Faça um novo deploy
 
 ## 🚀 Funcionalidades
 
