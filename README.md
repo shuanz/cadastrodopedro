@@ -2,6 +2,11 @@
 
 Sistema de cadastro de produtos para bar desenvolvido com Next.js, Prisma e PostgreSQL.
 
+## Deploy Status
+- ✅ Código corrigido e pronto para deploy
+- ✅ Erros de TypeScript/ESLint resolvidos
+- ✅ Commit: bf332b0
+
 ## 🚀 Funcionalidades
 
 - ✅ Sistema de autenticação (login/registro)
