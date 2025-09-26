@@ -51,7 +51,7 @@ export default function SaleTicket({ sale, onClose, printOnly = false }: TicketP
       try {
         window.print()
         return
-      } catch (error) {
+      } catch {
         console.log("Impressão direta falhou, tentando janela separada")
       }
 
@@ -126,7 +126,7 @@ export default function SaleTicket({ sale, onClose, printOnly = false }: TicketP
         handlePrint()
       }, 100)
     }
-  }, [printOnly])
+  }, [printOnly, handlePrint])
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

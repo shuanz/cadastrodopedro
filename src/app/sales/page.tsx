@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ShoppingCart, Search, Trash2, CreditCard, DollarSign, Printer } from "lucide-react"
+import { ShoppingCart, Search, Trash2, Printer } from "lucide-react"
 import SaleTicket from "@/components/SaleTicket"
 import DirectPrint from "@/components/DirectPrint"
 
@@ -142,7 +142,12 @@ export default function SalesPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          items: saleItems,
+          items: saleItems.map((item: { productId: string; quantity: number; price: number; subtotal: number }) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+            subtotal: item.subtotal
+          })),
           paymentMethod,
           discount: parseFloat(discount) || 0,
         }),

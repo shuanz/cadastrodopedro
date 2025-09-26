@@ -50,16 +50,16 @@ export default function Dashboard() {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       
-      const todaySales = sales.filter((sale: any) => {
-        const saleDate = new Date(sale.createdAt)
-        saleDate.setHours(0, 0, 0, 0)
-        return saleDate.getTime() === today.getTime()
-      }).reduce((total: number, sale: any) => total + Number(sale.total), 0)
+        const todaySales = sales.filter((sale: { createdAt: string; total: number }) => {
+          const saleDate = new Date(sale.createdAt)
+          saleDate.setHours(0, 0, 0, 0)
+          return saleDate.getTime() === today.getTime()
+        }).reduce((total: number, sale: { total: number }) => total + Number(sale.total), 0)
 
-      // Calcular produtos com estoque baixo (menos de 10 unidades)
-      const lowStockProductsList = products.filter((product: any) => 
-        product.inventory && product.inventory.quantity < 10
-      ).map((product: any) => ({
+        // Calcular produtos com estoque baixo (menos de 10 unidades)
+        const lowStockProductsList = products.filter((product: { inventory?: { quantity: number } }) => 
+          product.inventory && product.inventory.quantity < 10
+        ).map((product: { id: string; name: string; inventory: { quantity: number } }) => ({
         id: product.id,
         name: product.name,
         quantity: product.inventory.quantity
