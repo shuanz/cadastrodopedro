@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     console.log('🌱 Executando seed manual...')
     console.log('🔗 DATABASE_URL:', process.env.DATABASE_URL ? 'Configurada' : 'NÃO CONFIGURADA')
@@ -132,15 +132,29 @@ export async function POST(request: NextRequest) {
       }
     })
 
-  } catch (error) {
-    console.error('❌ Erro durante o seed:', error)
-    console.error('❌ Stack trace:', error.stack)
+  } catch (error: unknown) {
+    // Narrowing seguro para TypeScript
+    if (error instanceof Error) {
+      console.error('❌ Erro durante o seed:', error)
+      console.error('❌ Stack trace:', error.stack)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Erro durante o seed',
+          details: error.message,
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        },
+        { status: 500 }
+      )
+    }
+
+    // Fallback para erros não-Error (string, objeto, etc.)
+    console.error('❌ Erro durante o seed (tipo desconhecido):', error)
     return NextResponse.json(
       { 
         success: false, 
         error: 'Erro durante o seed',
-        details: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        details: String(error)
       },
       { status: 500 }
     )
