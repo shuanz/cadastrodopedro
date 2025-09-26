@@ -7,16 +7,31 @@ const prisma = new PrismaClient()
 export async function POST(request: NextRequest) {
   try {
     console.log('🌱 Executando seed manual...')
+    console.log('🔗 DATABASE_URL:', process.env.DATABASE_URL ? 'Configurada' : 'NÃO CONFIGURADA')
+
+    // Testar conexão com o banco
+    try {
+      await prisma.$connect()
+      console.log('✅ Conexão com banco estabelecida')
+    } catch (dbError) {
+      console.error('❌ Erro de conexão com banco:', dbError)
+      return NextResponse.json(
+        { success: false, error: 'Erro de conexão com banco de dados', details: dbError },
+        { status: 500 }
+      )
+    }
 
     // Criar usuário administrador padrão
     const adminEmail = 'admin@cadastrodopedro.com'
     const adminPassword = 'admin123'
 
+    console.log('👤 Verificando usuário admin existente...')
     const existingAdmin = await prisma.user.findUnique({
       where: { email: adminEmail }
     })
 
     if (!existingAdmin) {
+      console.log('🔐 Criando usuário admin...')
       const hashedPassword = await bcrypt.hash(adminPassword, 12)
       
       const admin = await prisma.user.create({
@@ -34,6 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Criar alguns produtos de exemplo
+    console.log('📦 Verificando produtos existentes...')
     const existingProducts = await prisma.product.count()
     
     if (existingProducts === 0) {
@@ -85,6 +101,7 @@ export async function POST(request: NextRequest) {
       ]
 
       for (const productData of products) {
+        console.log(`📦 Criando produto: ${productData.name}`)
         const product = await prisma.product.create({
           data: productData
         })
@@ -105,6 +122,7 @@ export async function POST(request: NextRequest) {
       console.log('ℹ️  Produtos já existem no banco de dados')
     }
 
+    console.log('🎉 Seed concluído com sucesso!')
     return NextResponse.json({ 
       success: true, 
       message: 'Seed executado com sucesso!',
@@ -116,11 +134,22 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Erro durante o seed:', error)
+    console.error('❌ Stack trace:', error.stack)
     return NextResponse.json(
-      { success: false, error: 'Erro durante o seed' },
+      { 
+        success: false, 
+        error: 'Erro durante o seed',
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    try {
+      await prisma.$disconnect()
+      console.log('🔌 Conexão com banco fechada')
+    } catch (disconnectError) {
+      console.error('❌ Erro ao fechar conexão:', disconnectError)
+    }
   }
 }
