@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useCallback } from "react"
 
 interface SaleItem {
   id: string
@@ -45,7 +45,7 @@ export default function SaleTicket({ sale, onClose, printOnly = false }: TicketP
     })
   }
 
-  const handlePrint = () => {
+  const handlePrint = useCallback(() => {
     if (ticketRef.current) {
       // Tentar impressão direta primeiro
       try {
@@ -117,7 +117,7 @@ export default function SaleTicket({ sale, onClose, printOnly = false }: TicketP
         }
       }
     }
-  }
+  }, [sale.id])
 
   useEffect(() => {
     // Auto print when component mounts (only if not printOnly)

@@ -34,7 +34,23 @@ export default function SalesPage() {
   const [paymentMethod, setPaymentMethod] = useState("dinheiro")
   const [discount, setDiscount] = useState("0")
   const [showTicket, setShowTicket] = useState(false)
-  const [lastSale, setLastSale] = useState<any>(null)
+  const [lastSale, setLastSale] = useState<{
+    id: string
+    total: number
+    discount: number
+    createdAt: string
+    items: Array<{
+      id: string
+      product: {
+        name: string
+        price?: number
+        unit?: string
+      }
+      quantity: number
+      price: number
+      subtotal: number
+    }>
+  } | null>(null)
   const [showDirectPrint, setShowDirectPrint] = useState(false)
 
   useEffect(() => {
