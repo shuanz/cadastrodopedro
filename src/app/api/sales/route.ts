@@ -2,33 +2,71 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import type { Session } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma-client"
+import { Pool } from 'pg'
+
+// Configuração do pool de conexões
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  },
+  max: 1,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+})
 
 export async function GET() {
+  const client = await pool.connect()
+  
   try {
-    const sales = await prisma.sale.findMany({
-      include: {
-        user: {
-          select: {
-            name: true,
-          },
-        },
-        items: {
-          include: {
-            product: {
-              select: {
-                name: true,
-                unit: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+    const result = await client.query(`
+      SELECT s.*, u.name as user_name,
+             si.id as item_id, si."productId", si.quantity as item_quantity, 
+             si.price as item_price, si.subtotal,
+             p.name as product_name, p.unit as product_unit
+      FROM "Sale" s
+      LEFT JOIN users u ON s."userId" = u.id
+      LEFT JOIN "SaleItem" si ON s.id = si."saleId"
+      LEFT JOIN "Product" p ON si."productId" = p.id
+      ORDER BY s."createdAt" DESC
+    `)
+
+    // Agrupar vendas e itens
+    const salesMap = new Map()
+    
+    result.rows.forEach(row => {
+      if (!salesMap.has(row.id)) {
+        salesMap.set(row.id, {
+          id: row.id,
+          userId: row.userId,
+          total: parseFloat(row.total),
+          discount: parseFloat(row.discount),
+          paymentMethod: row.paymentMethod,
+          status: row.status,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+          user: { name: row.user_name },
+          items: []
+        })
+      }
+      
+      if (row.item_id) {
+        salesMap.get(row.id).items.push({
+          id: row.item_id,
+          saleId: row.id,
+          productId: row.productId,
+          quantity: row.item_quantity,
+          price: parseFloat(row.item_price),
+          subtotal: parseFloat(row.subtotal),
+          product: {
+            name: row.product_name,
+            unit: row.product_unit
+          }
+        })
+      }
     })
 
+    const sales = Array.from(salesMap.values())
     return NextResponse.json(sales)
   } catch (error) {
     console.error("Erro ao buscar vendas:", error)
@@ -36,10 +74,14 @@ export async function GET() {
       { error: "Erro interno do servidor" },
       { status: 500 }
     )
+  } finally {
+    client.release()
   }
 }
 
 export async function POST(request: NextRequest) {
+  const client = await pool.connect()
+  
   try {
     const session = await getServerSession(authOptions) as Session | null
     
@@ -71,17 +113,21 @@ export async function POST(request: NextRequest) {
     }> = []
 
     for (const item of items) {
-      const product = await prisma.product.findUnique({
-        where: { id: item.productId },
-        include: { inventory: true },
-      })
+      const productResult = await client.query(`
+        SELECT p.*, i.quantity as inventory_quantity
+        FROM "Product" p
+        LEFT JOIN "Inventory" i ON p.id = i."productId"
+        WHERE p.id = $1
+      `, [item.productId])
 
-      if (!product) {
+      if (productResult.rows.length === 0) {
         return NextResponse.json(
           { error: `Produto ${item.productId} não encontrado` },
           { status: 400 }
         )
       }
+
+      const product = productResult.rows[0]
 
       if (!product.isActive) {
         return NextResponse.json(
@@ -90,7 +136,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      if (!product.inventory || product.inventory.quantity < item.quantity) {
+      if (!product.inventory_quantity || product.inventory_quantity < item.quantity) {
         return NextResponse.json(
           { error: `Estoque insuficiente para ${product.name}` },
           { status: 400 }
@@ -111,75 +157,92 @@ export async function POST(request: NextRequest) {
     const finalTotal = total - (discount || 0)
 
     // Criar venda e atualizar estoque em uma transação
-    const result = await prisma.$transaction(async (tx) => {
+    await client.query('BEGIN')
+    
+    try {
+      const saleId = `sale-${Date.now()}`
+      
       // Criar a venda
-      const sale = await tx.sale.create({
-        data: {
-          userId: session.user.id,
-          total: finalTotal,
-          discount: discount || 0,
-          paymentMethod,
-          status: "COMPLETED",
-        },
-      })
+      await client.query(`
+        INSERT INTO "Sale" (id, "userId", total, discount, "paymentMethod", status, "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+      `, [saleId, session.user.id, finalTotal, discount || 0, paymentMethod, 'COMPLETED'])
 
       // Criar os itens da venda
-      await tx.saleItem.createMany({
-        data: saleItems.map(item => ({
-          saleId: sale.id,
-          ...item,
-        })),
-      })
+      for (const item of saleItems) {
+        await client.query(`
+          INSERT INTO "SaleItem" (id, "saleId", "productId", quantity, price, subtotal, "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        `, [`saleitem-${Date.now()}-${Math.random()}`, saleId, item.productId, item.quantity, item.price, item.subtotal])
+      }
 
       // Atualizar estoque
       for (const item of saleItems) {
-        await tx.inventory.update({
-          where: { productId: item.productId },
-          data: {
-            quantity: {
-              decrement: item.quantity,
-            },
-            lastUpdated: new Date(),
-          },
-        })
+        await client.query(`
+          UPDATE "Inventory" 
+          SET quantity = quantity - $1, "updatedAt" = NOW()
+          WHERE "productId" = $2
+        `, [item.quantity, item.productId])
       }
 
-      return sale
-    })
+      await client.query('COMMIT')
 
-    // Buscar a venda completa com todos os dados para retornar
-    const completeSale = await prisma.sale.findUnique({
-      where: { id: result.id },
-      include: {
-        user: {
-          select: {
-            name: true,
-          },
-        },
-        items: {
-          include: {
-            product: {
-              select: {
-                name: true,
-                unit: true,
-              },
-            },
-          },
-        },
-      },
-    })
+      // Buscar a venda completa
+      const completeSaleResult = await client.query(`
+        SELECT s.*, u.name as user_name,
+               si.id as item_id, si."productId", si.quantity as item_quantity, 
+               si.price as item_price, si.subtotal,
+               p.name as product_name, p.unit as product_unit
+        FROM "Sale" s
+        LEFT JOIN users u ON s."userId" = u.id
+        LEFT JOIN "SaleItem" si ON s.id = si."saleId"
+        LEFT JOIN "Product" p ON si."productId" = p.id
+        WHERE s.id = $1
+      `, [saleId])
 
-    console.log("Venda completa retornada:", completeSale)
+      // Montar resposta
+      const saleData = completeSaleResult.rows[0]
+      const completeSale = {
+        id: saleData.id,
+        userId: saleData.userId,
+        total: parseFloat(saleData.total),
+        discount: parseFloat(saleData.discount),
+        paymentMethod: saleData.paymentMethod,
+        status: saleData.status,
+        createdAt: saleData.createdAt,
+        updatedAt: saleData.updatedAt,
+        user: { name: saleData.user_name },
+        items: completeSaleResult.rows.map(row => ({
+          id: row.item_id,
+          saleId: row.id,
+          productId: row.productId,
+          quantity: row.item_quantity,
+          price: parseFloat(row.item_price),
+          subtotal: parseFloat(row.subtotal),
+          product: {
+            name: row.product_name,
+            unit: row.product_unit
+          }
+        }))
+      }
 
-    return NextResponse.json(
-      { message: "Venda realizada com sucesso", sale: completeSale },
-      { status: 201 }
-    )
+      console.log("Venda completa retornada:", completeSale)
+
+      return NextResponse.json(
+        { message: "Venda realizada com sucesso", sale: completeSale },
+        { status: 201 }
+      )
+    } catch (error) {
+      await client.query('ROLLBACK')
+      throw error
+    }
   } catch (error) {
     console.error("Erro ao processar venda:", error)
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }
     )
+  } finally {
+    client.release()
   }
 }
