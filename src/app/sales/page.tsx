@@ -6,6 +6,7 @@ import { ShoppingCart, Search, Trash2, Printer } from "lucide-react"
 import SaleTicket from "@/components/SaleTicket"
 import DirectPrint from "@/components/DirectPrint"
 import SilentPrint from "@/components/SilentPrint"
+import AutoPrint from "@/components/AutoPrint"
 
 interface Product {
   id: string
@@ -54,6 +55,7 @@ export default function SalesPage() {
   } | null>(null)
   const [showDirectPrint, setShowDirectPrint] = useState(false)
   const [showSilentPrint, setShowSilentPrint] = useState(false)
+  const [showAutoPrint, setShowAutoPrint] = useState(false)
 
   useEffect(() => {
     fetchProducts()
@@ -178,16 +180,18 @@ export default function SalesPage() {
         
         if (printOnly) {
           // Apenas imprimir, sem mostrar modal
-          console.log("Executando impressão silenciosa")
-          setShowSilentPrint(true)
+          console.log("Executando impressão automática")
+          setShowAutoPrint(true)
           setShowTicket(false) // Garantir que o modal não apareça
           setShowDirectPrint(false) // Garantir que a impressão direta não execute
+          setShowSilentPrint(false) // Garantir que a impressão silenciosa não execute
         } else {
           // Mostrar modal normalmente
           console.log("Executando venda com modal")
           setShowTicket(true)
           setShowDirectPrint(false) // Garantir que a impressão direta não execute
           setShowSilentPrint(false) // Garantir que a impressão silenciosa não execute
+          setShowAutoPrint(false) // Garantir que a impressão automática não execute
         }
         
         setSaleItems([])
@@ -417,6 +421,17 @@ export default function SalesPage() {
               sale={lastSale}
               onClose={() => setShowTicket(false)}
               printOnly={false}
+            />
+          </>
+        )}
+
+        {/* Auto Print Component */}
+        {showAutoPrint && lastSale && (
+          <>
+            {console.log("Renderizando AutoPrint")}
+            <AutoPrint
+              sale={lastSale}
+              onComplete={() => setShowAutoPrint(false)}
             />
           </>
         )}

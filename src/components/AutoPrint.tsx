@@ -22,12 +22,12 @@ interface Sale {
   items: SaleItem[]
 }
 
-interface DirectPrintProps {
+interface AutoPrintProps {
   sale: Sale
   onComplete: () => void
 }
 
-export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
+export default function AutoPrint({ sale, onComplete }: AutoPrintProps) {
   const hasExecuted = useRef(false)
 
   useEffect(() => {
@@ -82,60 +82,7 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
     ticketContent += "Volte sempre!\n"
     ticketContent += "=".repeat(32) + "\n"
 
-    // Método 1: Tentar usar Web Printing API (se disponível)
-    const tryWebPrintAPI = () => {
-      return new Promise((resolve) => {
-        // Verificar se o navegador suporta Web Printing API
-        if ('navigator' in window && 'serviceWorker' in navigator) {
-          try {
-            // Tentar usar a API de impressão do navegador
-            const printData = {
-              content: ticketContent,
-              type: 'text/plain'
-            }
-            
-            // Criar blob com o conteúdo
-            const blob = new Blob([ticketContent], { type: 'text/plain' })
-            const url = URL.createObjectURL(blob)
-            
-            // Criar link temporário para impressão
-            const link = document.createElement('a')
-            link.href = url
-            link.target = '_blank'
-            link.style.display = 'none'
-            document.body.appendChild(link)
-            
-            // Tentar impressão direta
-            setTimeout(() => {
-              try {
-                link.click()
-                window.print()
-                resolve(true)
-              } catch (error) {
-                resolve(false)
-              }
-            }, 100)
-            
-            // Limpar recursos
-            setTimeout(() => {
-              try {
-                document.body.removeChild(link)
-                URL.revokeObjectURL(url)
-              } catch (e) {
-                // Ignorar erros de limpeza
-              }
-            }, 3000)
-            
-          } catch (error) {
-            resolve(false)
-          }
-        } else {
-          resolve(false)
-        }
-      })
-    }
-
-    // Método 2: Impressão com iframe oculto
+    // Método 1: Tentar impressão com iframe oculto
     const tryIframePrint = () => {
       return new Promise((resolve) => {
         const iframe = document.createElement('iframe')
@@ -144,7 +91,6 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
         iframe.style.top = '-9999px'
         iframe.style.width = '300px'
         iframe.style.height = '400px'
-        iframe.style.border = 'none'
         
         document.body.appendChild(iframe)
         
@@ -166,17 +112,13 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
                     padding: 10px;
                     white-space: pre-line;
                     background: white;
-                    color: black;
                   }
                   @page { 
                     margin: 0; 
                     size: 80mm 200mm; 
                   }
                   @media print {
-                    body { 
-                      margin: 0; 
-                      padding: 5px;
-                    }
+                    body { margin: 0; }
                   }
                 </style>
               </head>
@@ -190,7 +132,6 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
           iframe.onload = () => {
             setTimeout(() => {
               try {
-                iframe.contentWindow?.focus()
                 iframe.contentWindow?.print()
                 resolve(true)
               } catch (error) {
@@ -213,11 +154,11 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
       })
     }
 
-    // Método 3: Impressão com elemento temporário
+    // Método 2: Tentar impressão com elemento temporário
     const tryElementPrint = () => {
       return new Promise((resolve) => {
         const printDiv = document.createElement('div')
-        printDiv.id = 'direct-print-ticket'
+        printDiv.id = 'auto-print-ticket'
         printDiv.style.position = 'absolute'
         printDiv.style.left = '-9999px'
         printDiv.style.top = '-9999px'
@@ -228,7 +169,6 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
         printDiv.style.width = '300px'
         printDiv.style.backgroundColor = 'white'
         printDiv.style.padding = '10px'
-        printDiv.style.color = 'black'
         printDiv.textContent = ticketContent
         
         document.body.appendChild(printDiv)
@@ -237,8 +177,8 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
         const printCSS = `
           @media print {
             * { visibility: hidden !important; }
-            #direct-print-ticket, #direct-print-ticket * { visibility: visible !important; }
-            #direct-print-ticket { 
+            #auto-print-ticket, #auto-print-ticket * { visibility: visible !important; }
+            #auto-print-ticket { 
               position: absolute !important; 
               left: 0 !important; 
               top: 0 !important; 
@@ -246,8 +186,6 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
               height: 100% !important;
               margin: 0 !important;
               padding: 10px !important;
-              background: white !important;
-              color: black !important;
             }
             @page { 
               margin: 0 !important; 
@@ -263,7 +201,6 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
         // Tentar impressão
         setTimeout(() => {
           try {
-            window.focus()
             window.print()
             resolve(true)
           } catch (error) {
@@ -283,7 +220,7 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
       })
     }
 
-    // Método 4: Fallback com janela separada
+    // Método 3: Fallback com janela separada (último recurso)
     const tryWindowPrint = () => {
       return new Promise((resolve) => {
         const printWindow = window.open('', '_blank', 'width=400,height=600,scrollbars=no,resizable=no')
@@ -303,7 +240,6 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
                     padding: 20px;
                     white-space: pre-line;
                     background: white;
-                    color: black;
                   }
                   @page { 
                     margin: 0; 
@@ -320,7 +256,6 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
           
           printWindow.onload = () => {
             setTimeout(() => {
-              printWindow.focus()
               printWindow.print()
               setTimeout(() => {
                 printWindow.close()
@@ -335,17 +270,12 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
     }
 
     // Executar impressão com múltiplas tentativas
-    const executeDirectPrint = async () => {
+    const executeAutoPrint = async () => {
       try {
-        console.log('🖨️ Tentando impressão direta...')
+        console.log('🖨️ Tentando impressão automática...')
         
-        // Tentar Web Printing API primeiro
-        let success = await tryWebPrintAPI()
-        
-        if (!success) {
-          console.log('🔄 Web API falhou, tentando iframe...')
-          success = await tryIframePrint()
-        }
+        // Tentar iframe primeiro
+        let success = await tryIframePrint()
         
         if (!success) {
           console.log('🔄 Iframe falhou, tentando elemento temporário...')
@@ -357,15 +287,15 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
           await tryWindowPrint()
         }
         
-        console.log('✅ Impressão direta concluída')
+        console.log('✅ Impressão concluída')
       } catch (error) {
-        console.error('❌ Erro na impressão direta:', error)
+        console.error('❌ Erro na impressão automática:', error)
       } finally {
         onComplete()
       }
     }
 
-    executeDirectPrint()
+    executeAutoPrint()
   }, [sale, onComplete])
 
   return null
