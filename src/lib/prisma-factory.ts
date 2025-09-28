@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 
-// Configuração específica para Vercel/Serverless
-const createPrismaClient = () => {
+// Factory function para criar instâncias do Prisma Client
+export function createPrismaClient(): PrismaClient {
   return new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['error'] : ['error'],
     datasources: {
@@ -12,7 +12,7 @@ const createPrismaClient = () => {
   })
 }
 
-// Singleton pattern para evitar múltiplas instâncias
+// Para desenvolvimento, usar singleton
 let prisma: PrismaClient
 
 declare global {
@@ -20,7 +20,7 @@ declare global {
 }
 
 if (process.env.NODE_ENV === 'production') {
-  // Em produção, criar nova instância a cada request para evitar prepared statements
+  // Em produção, sempre criar nova instância
   prisma = createPrismaClient()
 } else {
   // Em desenvolvimento, usar singleton

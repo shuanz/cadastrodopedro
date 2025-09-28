@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
-import { PrismaClient } from '@prisma/client'
+import { createPrismaClient } from "@/lib/prisma-factory"
 import bcrypt from 'bcryptjs'
 
-const prisma = new PrismaClient()
-
 export async function POST() {
+  const prisma = createPrismaClient()
+  
   try {
     console.log('🌱 Executando seed manual...')
     console.log('🔗 DATABASE_URL:', process.env.DATABASE_URL ? 'Configurada' : 'NÃO CONFIGURADA')
