@@ -8,6 +8,17 @@ declare global {
 // exhausting your database connection limit.
 export const prisma = globalThis.__prisma ?? new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+  // Configuração específica para Vercel/Serverless
+  __internal: {
+    engine: {
+      binaryTargets: ['native'],
+    },
+  },
 })
 
 if (process.env.NODE_ENV !== 'production') {
