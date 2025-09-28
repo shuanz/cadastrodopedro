@@ -82,46 +82,89 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
     ticketText += "Volte sempre!\n"
     ticketText += "=".repeat(32) + "\n"
 
-    // Usar window.print() diretamente com texto simples
-    const printWindow = window.open('', '_blank', 'width=400,height=600')
-    
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Ticket</title>
-            <style>
-              body {
-                font-family: 'Courier New', monospace;
-                font-size: 12px;
-                line-height: 1.2;
-                margin: 0;
-                padding: 20px;
-                white-space: pre-line;
-              }
-            </style>
-          </head>
-          <body>
-            ${ticketText}
-          </body>
-        </html>
-      `)
-      printWindow.document.close()
+    // Tentar impressão silenciosa primeiro
+    try {
+      // Criar elemento temporário para impressão
+      const printElement = document.createElement('div')
+      printElement.style.position = 'absolute'
+      printElement.style.left = '-9999px'
+      printElement.style.fontFamily = 'Courier New, monospace'
+      printElement.style.fontSize = '12px'
+      printElement.style.lineHeight = '1.2'
+      printElement.style.whiteSpace = 'pre-line'
+      printElement.textContent = ticketText
       
-      // Aguardar carregamento e imprimir
-      printWindow.onload = () => {
-        setTimeout(() => {
-          printWindow.print()
-          // Fechar janela após um tempo
+      document.body.appendChild(printElement)
+      
+      // Configurar CSS para impressão silenciosa
+      const printStyles = document.createElement('style')
+      printStyles.textContent = `
+        @media print {
+          body * { visibility: hidden; }
+          .print-content, .print-content * { visibility: visible; }
+          .print-content { position: absolute; left: 0; top: 0; }
+          @page { margin: 0; size: 80mm 200mm; }
+        }
+      `
+      document.head.appendChild(printStyles)
+      
+      printElement.className = 'print-content'
+      
+      // Tentar impressão silenciosa
+      window.print()
+      
+      // Limpar elementos temporários
+      setTimeout(() => {
+        document.body.removeChild(printElement)
+        document.head.removeChild(printStyles)
+        onComplete()
+      }, 1000)
+      
+    } catch (error) {
+      console.log('Impressão silenciosa falhou, usando janela separada')
+      
+      // Fallback: janela separada
+      const printWindow = window.open('', '_blank', 'width=400,height=600')
+      
+      if (printWindow) {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Ticket</title>
+              <style>
+                body {
+                  font-family: 'Courier New', monospace;
+                  font-size: 12px;
+                  line-height: 1.2;
+                  margin: 0;
+                  padding: 20px;
+                  white-space: pre-line;
+                }
+                @page { margin: 0; size: 80mm 200mm; }
+              </style>
+            </head>
+            <body>
+              ${ticketText}
+            </body>
+          </html>
+        `)
+        printWindow.document.close()
+        
+        // Aguardar carregamento e imprimir
+        printWindow.onload = () => {
           setTimeout(() => {
-            printWindow.close()
-            onComplete()
-          }, 2000)
-        }, 1000)
+            printWindow.print()
+            // Fechar janela após um tempo
+            setTimeout(() => {
+              printWindow.close()
+              onComplete()
+            }, 2000)
+          }, 1000)
+        }
+      } else {
+        onComplete()
       }
-    } else {
-      onComplete()
     }
   }, [sale, onComplete])
 

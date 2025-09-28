@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ShoppingCart, Search, Trash2, Printer } from "lucide-react"
 import SaleTicket from "@/components/SaleTicket"
 import DirectPrint from "@/components/DirectPrint"
+import SilentPrint from "@/components/SilentPrint"
 
 interface Product {
   id: string
@@ -52,6 +53,7 @@ export default function SalesPage() {
     }>
   } | null>(null)
   const [showDirectPrint, setShowDirectPrint] = useState(false)
+  const [showSilentPrint, setShowSilentPrint] = useState(false)
 
   useEffect(() => {
     fetchProducts()
@@ -176,14 +178,16 @@ export default function SalesPage() {
         
         if (printOnly) {
           // Apenas imprimir, sem mostrar modal
-          console.log("Executando impressão direta")
-          setShowDirectPrint(true)
+          console.log("Executando impressão silenciosa")
+          setShowSilentPrint(true)
           setShowTicket(false) // Garantir que o modal não apareça
+          setShowDirectPrint(false) // Garantir que a impressão direta não execute
         } else {
           // Mostrar modal normalmente
           console.log("Executando venda com modal")
           setShowTicket(true)
           setShowDirectPrint(false) // Garantir que a impressão direta não execute
+          setShowSilentPrint(false) // Garantir que a impressão silenciosa não execute
         }
         
         setSaleItems([])
@@ -417,7 +421,18 @@ export default function SalesPage() {
           </>
         )}
 
-        {/* Direct Print Component */}
+        {/* Silent Print Component */}
+        {showSilentPrint && lastSale && (
+          <>
+            {console.log("Renderizando SilentPrint")}
+            <SilentPrint
+              sale={lastSale}
+              onComplete={() => setShowSilentPrint(false)}
+            />
+          </>
+        )}
+
+        {/* Direct Print Component (fallback) */}
         {showDirectPrint && lastSale && (
           <>
             {console.log("Renderizando DirectPrint")}
