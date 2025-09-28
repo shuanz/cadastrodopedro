@@ -1,6 +1,17 @@
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
-import { prisma } from "@/lib/prisma-client"
+import { Pool } from 'pg'
+
+// Configuração do pool de conexões
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  },
+  max: 1,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+})
 
 export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -16,30 +27,39 @@ export const authOptions = {
           return null
         }
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
+        const client = await pool.connect()
+        
+        try {
+          const result = await client.query(
+            'SELECT id, name, email, password, role FROM users WHERE email = $1',
+            [credentials.email]
+          )
+
+          if (result.rows.length === 0) {
+            return null
           }
-        })
 
-        if (!user) {
+          const user = result.rows[0]
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          )
+
+          if (!isPasswordValid) {
+            return null
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          }
+        } catch (error) {
+          console.error('Erro na autenticação:', error)
           return null
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        )
-
-        if (!isPasswordValid) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
+        } finally {
+          client.release()
         }
       }
     })
