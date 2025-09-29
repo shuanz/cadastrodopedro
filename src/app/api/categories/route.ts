@@ -22,7 +22,7 @@ export async function GET() {
     const result = await client.query(`
       SELECT c.*, COUNT(p.id) as product_count
       FROM "categories" c
-      LEFT JOIN "Product" p ON c.name = p.category
+      LEFT JOIN "products" p ON c.name = p.category
       GROUP BY c.id
       ORDER BY c.name ASC
     `)

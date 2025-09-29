@@ -70,14 +70,14 @@ export async function POST() {
 
     for (const categoryData of categories) {
       const existingCategoryResult = await client.query(
-        'SELECT id FROM "Category" WHERE name = $1',
+        'SELECT id FROM "categories" WHERE name = $1',
         [categoryData.name]
       )
 
       if (existingCategoryResult.rows.length === 0) {
         const categoryId = `category-${Date.now()}-${Math.random()}`
         await client.query(
-          `INSERT INTO "Category" (id, name, description, "isActive", "createdAt", "updatedAt")
+          `INSERT INTO "categories" (id, name, description, "isActive", "createdAt", "updatedAt")
           VALUES ($1, $2, $3, $4, NOW(), NOW())`,
           [categoryId, categoryData.name, categoryData.description, true]
         )
@@ -102,14 +102,14 @@ export async function POST() {
 
     for (const unitData of units) {
       const existingUnitResult = await client.query(
-        'SELECT id FROM "Unit" WHERE name = $1',
+        'SELECT id FROM "units" WHERE name = $1',
         [unitData.name]
       )
 
       if (existingUnitResult.rows.length === 0) {
         const unitId = `unit-${Date.now()}-${Math.random()}`
         await client.query(
-          `INSERT INTO "Unit" (id, name, symbol, description, "isActive", "createdAt", "updatedAt")
+          `INSERT INTO "units" (id, name, symbol, description, "isActive", "createdAt", "updatedAt")
           VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
           [unitId, unitData.name, unitData.symbol, unitData.description, true]
         )
@@ -123,7 +123,7 @@ export async function POST() {
 
     // Criar alguns produtos de exemplo
     console.log('📦 Verificando produtos existentes...')
-    const existingProductsResult = await client.query('SELECT COUNT(*) FROM "Product"')
+    const existingProductsResult = await client.query('SELECT COUNT(*) FROM "products"')
     const existingProducts = parseInt(existingProductsResult.rows[0].count)
     
     if (existingProducts === 0) {
@@ -179,7 +179,7 @@ export async function POST() {
         const productId = `product-${Date.now()}-${Math.random()}`
         
         await client.query(
-          `INSERT INTO "Product" (id, name, description, price, cost, "categoryId", "unitId", barcode, "isActive", "createdAt", "updatedAt")
+          `INSERT INTO "products" (id, name, description, price, cost, category, unit, barcode, "isActive", "createdAt", "updatedAt")
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())`,
           [
             productId,
@@ -197,7 +197,7 @@ export async function POST() {
         // Criar estoque inicial
         const inventoryId = `inventory-${Date.now()}-${Math.random()}`
         await client.query(
-          `INSERT INTO "Inventory" (id, "productId", quantity, "minQuantity", "maxQuantity", "lastUpdated")
+          `INSERT INTO "inventory" (id, "productId", quantity, "minQuantity", "maxQuantity", "lastUpdated")
           VALUES ($1, $2, $3, $4, $5, NOW())`,
           [
             inventoryId,

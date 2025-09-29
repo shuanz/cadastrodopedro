@@ -27,7 +27,7 @@ export async function GET() {
     const userCount = parseInt(userResult.rows[0].count)
 
     // Contar produtos
-    const productResult = await client.query('SELECT COUNT(*) as count FROM "Product"')
+    const productResult = await client.query('SELECT COUNT(*) as count FROM "products"')
     const productCount = parseInt(productResult.rows[0].count)
 
     console.log(`📊 Usuários: ${userCount}, Produtos: ${productCount}`)

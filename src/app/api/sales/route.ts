@@ -24,10 +24,10 @@ export async function GET() {
              si.id as item_id, si."productId", si.quantity as item_quantity, 
              si.price as item_price, si.subtotal,
              p.name as product_name, p.unit as product_unit
-      FROM "Sale" s
+      FROM "sales" s
       LEFT JOIN users u ON s."userId" = u.id
-      LEFT JOIN "SaleItem" si ON s.id = si."saleId"
-      LEFT JOIN "Product" p ON si."productId" = p.id
+      LEFT JOIN "sale_items" si ON s.id = si."saleId"
+      LEFT JOIN "products" p ON si."productId" = p.id
       ORDER BY s."createdAt" DESC
     `)
 
@@ -122,8 +122,8 @@ export async function POST(request: NextRequest) {
                b.id as barrel_id, b."volumeDisponivelMl" as barrel_volume_available
         FROM "products" p
         LEFT JOIN "inventory" i ON p.id = i."productId"
-        LEFT JOIN "categories" c ON p."categoryId" = c.id
-        LEFT JOIN "units" u ON p."unitId" = u.id
+        LEFT JOIN "categories" c ON p.category = c.name
+        LEFT JOIN "units" u ON p.unit = u.name
         LEFT JOIN "barrels" b ON p."barrelId" = b.id
         WHERE p.id = $1
       `, [item.productId])
@@ -279,8 +279,8 @@ export async function POST(request: NextRequest) {
         LEFT JOIN users u ON s."userId" = u.id
         LEFT JOIN "sale_items" si ON s.id = si."saleId"
         LEFT JOIN "products" p ON si."productId" = p.id
-        LEFT JOIN "categories" c ON p."categoryId" = c.id
-        LEFT JOIN "units" u2 ON p."unitId" = u2.id
+        LEFT JOIN "categories" c ON p.category = c.name
+        LEFT JOIN "units" u2 ON p.unit = u2.name
         LEFT JOIN "barrels" b ON p."barrelId" = b.id
         WHERE s.id = $1
       `, [saleId])
