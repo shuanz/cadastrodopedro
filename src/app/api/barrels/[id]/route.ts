@@ -1,30 +1,21 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 
 // API temporariamente desabilitada - tabela barrels não existe
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET() {
   return NextResponse.json(
     { error: "Funcionalidade de barrils não disponível no momento" },
     { status: 503 }
   )
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT() {
   return NextResponse.json(
     { error: "Funcionalidade de barrils não disponível no momento" },
     { status: 503 }
   )
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE() {
   return NextResponse.json(
     { error: "Funcionalidade de barrils não disponível no momento" },
     { status: 503 }

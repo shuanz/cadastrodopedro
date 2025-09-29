@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 
 // API temporariamente desabilitada - tabela barrels não existe
 export async function GET() {
@@ -8,7 +8,7 @@ export async function GET() {
   )
 }
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   return NextResponse.json(
     { error: "Funcionalidade de barrils não disponível no momento" },
     { status: 503 }

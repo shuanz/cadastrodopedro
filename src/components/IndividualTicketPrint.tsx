@@ -48,7 +48,7 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
       })
     }
 
-    const generateIndividualTicketContent = (item: any, ticketNumber: number, totalTickets: number) => {
+    const generateIndividualTicketContent = (item: { product: { name: string }, quantity: number, price: number, subtotal: number }, ticketNumber: number, totalTickets: number) => {
       let ticketText = ""
       ticketText += "=".repeat(32) + "\n"
       ticketText += "        CADASTRO DO PEDRO\n"

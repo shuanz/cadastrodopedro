@@ -90,8 +90,6 @@ export async function POST(request: NextRequest) {
       minQuantity,
       maxQuantity,
       productType,
-      volumeRetiradaMl,
-      barrelId,
     } = await request.json()
 
     // Validações para produtos fracionados (desabilitado até criar tabela barrels)
