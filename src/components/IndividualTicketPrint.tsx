@@ -26,12 +26,24 @@ interface IndividualTicketPrintProps {
 
 export default function IndividualTicketPrint({ sale, onComplete }: IndividualTicketPrintProps) {
   const hasExecuted = useRef(false)
+  const executionId = useRef<string | null>(null)
 
-  console.log("IndividualTicketPrint component mounted!", { sale, hasExecuted: hasExecuted.current })
+  console.log("IndividualTicketPrint component mounted!", { 
+    saleId: sale?.id, 
+    hasExecuted: hasExecuted.current,
+    executionId: executionId.current 
+  })
 
   useEffect(() => {
-    if (hasExecuted.current) return
+    // Evitar execução múltipla para a mesma venda
+    const currentSaleId = sale?.id
+    if (hasExecuted.current && executionId.current === currentSaleId) {
+      console.log("IndividualTicketPrint: Já executado para esta venda, ignorando...")
+      return
+    }
+    
     hasExecuted.current = true
+    executionId.current = currentSaleId
 
     console.log("IndividualTicketPrint iniciado!")
     console.log("Dados da venda:", sale)
@@ -78,7 +90,7 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
       }
       
       let currentTicketNumber = 1
-      console.log(`Gerando ${totalTickets} tickets para impressão em lote...`)
+      console.log(`🚀 EXECUTANDO IMPRESSÃO EM LOTE: ${totalTickets} tickets para impressão em lote...`)
 
       // Concatenar todos os tickets em um único documento com quebras de página
       let allTicketsHTML = ""
@@ -98,7 +110,7 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
             </div>
           `
           
-          console.log(`Gerando ticket ${currentTicketNumber}/${totalTickets}: ${item.product.name} (unidade ${unit + 1})`)
+          console.log(`📄 Gerando ticket ${currentTicketNumber}/${totalTickets}: ${item.product.name} (unidade ${unit + 1})`)
           currentTicketNumber++
         }
       }
