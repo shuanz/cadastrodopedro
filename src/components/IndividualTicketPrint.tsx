@@ -31,6 +31,9 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
     if (hasExecuted.current) return
     hasExecuted.current = true
 
+    console.log("🖨️ IndividualTicketPrint iniciado!")
+    console.log("Dados da venda:", sale)
+
     const formatDate = (dateString: string) => {
       if (!dateString) return 'Data não disponível'
       const date = new Date(dateString)
