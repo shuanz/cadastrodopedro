@@ -34,6 +34,64 @@ async function main() {
     console.log('ℹ️  Usuário administrador já existe')
   }
 
+  // Criar categorias padrão
+  console.log('📂 Criando categorias padrão...')
+  
+  const categories = [
+    { name: 'Bebidas', description: 'Bebidas em geral' },
+    { name: 'Comidas', description: 'Alimentos e comidas' },
+    { name: 'Petiscos', description: 'Petiscos e aperitivos' },
+    { name: 'Limpeza', description: 'Produtos de limpeza' }
+  ]
+
+  const createdCategories: { [key: string]: string } = {}
+
+  for (const categoryData of categories) {
+    const existingCategory = await prisma.category.findUnique({
+      where: { name: categoryData.name }
+    })
+
+    if (!existingCategory) {
+      const category = await prisma.category.create({
+        data: categoryData
+      })
+      createdCategories[categoryData.name] = category.id
+      console.log(`✅ Categoria criada: ${category.name}`)
+    } else {
+      createdCategories[categoryData.name] = existingCategory.id
+      console.log(`ℹ️  Categoria já existe: ${categoryData.name}`)
+    }
+  }
+
+  // Criar unidades padrão
+  console.log('📏 Criando unidades padrão...')
+  
+  const units = [
+    { name: 'Unidade', symbol: 'un', description: 'Unidade individual' },
+    { name: 'Litro', symbol: 'L', description: 'Medida de volume' },
+    { name: 'Quilograma', symbol: 'kg', description: 'Medida de peso' },
+    { name: 'Grama', symbol: 'g', description: 'Medida de peso em gramas' }
+  ]
+
+  const createdUnits: { [key: string]: string } = {}
+
+  for (const unitData of units) {
+    const existingUnit = await prisma.unit.findUnique({
+      where: { name: unitData.name }
+    })
+
+    if (!existingUnit) {
+      const unit = await prisma.unit.create({
+        data: unitData
+      })
+      createdUnits[unitData.name] = unit.id
+      console.log(`✅ Unidade criada: ${unit.name} (${unit.symbol})`)
+    } else {
+      createdUnits[unitData.name] = existingUnit.id
+      console.log(`ℹ️  Unidade já existe: ${unitData.name}`)
+    }
+  }
+
   // Criar alguns produtos de exemplo
   const existingProducts = await prisma.product.count()
   
@@ -46,8 +104,8 @@ async function main() {
         description: 'Cerveja pilsen gelada',
         price: 5.50,
         cost: 3.20,
-        category: 'Bebidas',
-        unit: 'unidade',
+        categoryName: 'Bebidas',
+        unitName: 'Unidade',
         barcode: '7891234567890'
       },
       {
@@ -55,8 +113,8 @@ async function main() {
         description: 'Refrigerante de cola gelado',
         price: 4.50,
         cost: 2.80,
-        category: 'Bebidas',
-        unit: 'unidade',
+        categoryName: 'Bebidas',
+        unitName: 'Unidade',
         barcode: '7891234567891'
       },
       {
@@ -64,30 +122,38 @@ async function main() {
         description: 'Batata frita crocante - serve 2 pessoas',
         price: 12.90,
         cost: 5.50,
-        category: 'Petiscos',
-        unit: 'unidade'
+        categoryName: 'Petiscos',
+        unitName: 'Unidade'
       },
       {
         name: 'Hambúrguer Artesanal',
         description: 'Hambúrguer com pão brioche, carne 150g, queijo e salada',
         price: 18.90,
         cost: 8.50,
-        category: 'Comidas',
-        unit: 'unidade'
+        categoryName: 'Comidas',
+        unitName: 'Unidade'
       },
       {
         name: 'Água Mineral 500ml',
         description: 'Água mineral sem gás',
         price: 3.00,
         cost: 1.20,
-        category: 'Bebidas',
-        unit: 'unidade'
+        categoryName: 'Bebidas',
+        unitName: 'Unidade'
       }
     ]
 
     for (const productData of products) {
       const product = await prisma.product.create({
-        data: productData
+        data: {
+          name: productData.name,
+          description: productData.description,
+          price: productData.price,
+          cost: productData.cost,
+          categoryId: createdCategories[productData.categoryName],
+          unitId: createdUnits[productData.unitName],
+          barcode: productData.barcode
+        }
       })
 
       // Criar estoque inicial

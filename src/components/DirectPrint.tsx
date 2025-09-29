@@ -89,12 +89,6 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
         if ('navigator' in window && 'serviceWorker' in navigator) {
           try {
             // Tentar usar a API de impressão do navegador
-            const printData = {
-              content: ticketContent,
-              type: 'text/plain'
-            }
-            
-            // Criar blob com o conteúdo
             const blob = new Blob([ticketContent], { type: 'text/plain' })
             const url = URL.createObjectURL(blob)
             
@@ -111,7 +105,7 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
                 link.click()
                 window.print()
                 resolve(true)
-              } catch (error) {
+              } catch {
                 resolve(false)
               }
             }, 100)
@@ -193,7 +187,7 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
                 iframe.contentWindow?.focus()
                 iframe.contentWindow?.print()
                 resolve(true)
-              } catch (error) {
+              } catch {
                 resolve(false)
               }
             }, 500)
@@ -206,7 +200,7 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
         setTimeout(() => {
           try {
             document.body.removeChild(iframe)
-          } catch (e) {
+          } catch {
             // Ignorar erros de limpeza
           }
         }, 5000)
@@ -276,7 +270,7 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
           try {
             document.body.removeChild(printDiv)
             document.head.removeChild(styleElement)
-          } catch (e) {
+          } catch {
             // Ignorar erros de limpeza
           }
         }, 3000)

@@ -134,7 +134,7 @@ export default function AutoPrint({ sale, onComplete }: AutoPrintProps) {
               try {
                 iframe.contentWindow?.print()
                 resolve(true)
-              } catch (error) {
+              } catch {
                 resolve(false)
               }
             }, 500)
@@ -147,7 +147,7 @@ export default function AutoPrint({ sale, onComplete }: AutoPrintProps) {
         setTimeout(() => {
           try {
             document.body.removeChild(iframe)
-          } catch (e) {
+          } catch {
             // Ignorar erros de limpeza
           }
         }, 5000)
@@ -203,7 +203,7 @@ export default function AutoPrint({ sale, onComplete }: AutoPrintProps) {
           try {
             window.print()
             resolve(true)
-          } catch (error) {
+          } catch {
             resolve(false)
           }
         }, 200)
@@ -213,7 +213,7 @@ export default function AutoPrint({ sale, onComplete }: AutoPrintProps) {
           try {
             document.body.removeChild(printDiv)
             document.head.removeChild(styleElement)
-          } catch (e) {
+          } catch {
             // Ignorar erros de limpeza
           }
         }, 3000)

@@ -128,7 +128,7 @@ export default function SilentPrint({ sale, onComplete }: SilentPrintProps) {
           try {
             window.print()
             resolve(true)
-          } catch (error) {
+          } catch {
             resolve(false)
           }
         }, 100)
@@ -138,7 +138,7 @@ export default function SilentPrint({ sale, onComplete }: SilentPrintProps) {
           try {
             document.body.removeChild(printElement)
             document.head.removeChild(styleElement)
-          } catch (e) {
+          } catch {
             // Ignorar erros de limpeza
           }
           resolve(true)
