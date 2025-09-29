@@ -92,93 +92,56 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
       let currentTicketNumber = 1
       console.log(`🚀 EXECUTANDO IMPRESSÃO EM LOTE: ${totalTickets} tickets para impressão em lote...`)
 
-      // Concatenar todos os tickets em um único documento sem quebras de página
-      let allTicketsHTML = ""
+      // Concatenar todos os tickets em um único documento
+      let allTicketsContent = ""
       
       for (const item of sale.items) {
         // Gerar um ticket para cada unidade deste produto
         for (let unit = 0; unit < item.quantity; unit++) {
           const ticketContent = generateIndividualTicketContent(item, currentTicketNumber, totalTickets)
-          
-          // Criar uma div para cada ticket sem quebra de página
-          allTicketsHTML += `
-            <div class="ticket">
-              <pre>${ticketContent}</pre>
-            </div>
-          `
+          allTicketsContent += ticketContent + "\n\n" + "=".repeat(50) + "\n\n"
           
           console.log(`📄 Gerando ticket ${currentTicketNumber}/${totalTickets}: ${item.product.name} (unidade ${unit + 1})`)
           currentTicketNumber++
         }
       }
 
-      // Criar um único iframe para imprimir todos os tickets
-      const iframe = document.createElement('iframe')
-      iframe.style.display = 'none'
-      document.body.appendChild(iframe)
-      
-      const iframeDoc = iframe.contentWindow?.document
-      if (iframeDoc) {
-        iframeDoc.write(`
+      // Criar uma nova janela para impressão
+      const printWindow = window.open('', '_blank', 'width=800,height=600')
+      if (printWindow) {
+        printWindow.document.write(`
           <!DOCTYPE html>
           <html>
             <head>
               <title>Tickets de Venda - ${totalTickets} tickets</title>
               <style>
                 body {
-                  margin: 0;
-                  padding: 0;
-                  font-family: 'Courier New', monospace;
-                }
-                .ticket {
-                  width: 100%;
-                  margin: 0;
-                  padding: 0;
-                  border-bottom: 2px dashed #ccc;
-                  margin-bottom: 20px;
-                }
-                .ticket:last-child {
-                  border-bottom: none;
-                }
-                .ticket pre {
                   font-family: 'Courier New', monospace;
                   font-size: 12px;
                   line-height: 1.2;
-                  margin: 0;
-                  padding: 20px;
+                  margin: 20px;
+                  padding: 0;
                   white-space: pre-line;
                 }
-                @page { 
-                  margin: 0; 
-                  size: A4; 
+                @media print {
+                  body { margin: 0; }
                 }
               </style>
             </head>
             <body>
-              ${allTicketsHTML}
+              ${allTicketsContent}
             </body>
           </html>
         `)
-        iframeDoc.close()
+        printWindow.document.close()
         
-        // Aguardar carregamento e imprimir tudo de uma vez
-        await new Promise(resolve => {
-          iframe.onload = () => {
-            setTimeout(() => {
-              try {
-                iframe.contentWindow?.print()
-                setTimeout(() => {
-                  document.body.removeChild(iframe)
-                  resolve(true)
-                }, 1000)
-              } catch (error) {
-                console.error('Erro ao imprimir:', error)
-                document.body.removeChild(iframe)
-                resolve(true)
-              }
-            }, 500)
-          }
-        })
+        // Aguardar carregamento e imprimir
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print()
+            printWindow.close()
+          }, 500)
+        }
       }
       
       console.log(`Impressão de ${totalTickets} tickets concluída!`)
