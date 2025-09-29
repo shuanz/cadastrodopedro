@@ -115,7 +115,7 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
               try {
                 document.body.removeChild(link)
                 URL.revokeObjectURL(url)
-              } catch (e) {
+              } catch {
                 // Ignorar erros de limpeza
               }
             }, 3000)
@@ -260,7 +260,7 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
             window.focus()
             window.print()
             resolve(true)
-          } catch (error) {
+          } catch {
             resolve(false)
           }
         }, 200)
