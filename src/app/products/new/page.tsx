@@ -18,11 +18,20 @@ interface Unit {
   description?: string
 }
 
+interface Barrel {
+  id: string
+  name: string
+  volumeTotalMl: number
+  volumeDisponivelMl: number
+  status: string
+}
+
 export default function NewProductPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [units, setUnits] = useState<Unit[]>([])
+  const [barrels, setBarrels] = useState<Barrel[]>([])
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -33,23 +42,36 @@ export default function NewProductPage() {
     barcode: "",
     minQuantity: "0",
     maxQuantity: "",
+    productType: "UNIT",
+    volumeRetiradaMl: "",
+    barrelId: "",
   })
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Carregar categorias
-        const categoriesResponse = await fetch('/api/categories')
+        // Carregar categorias, unidades e barrils em paralelo
+        const [categoriesResponse, unitsResponse, barrelsResponse] = await Promise.all([
+          fetch('/api/categories'),
+          fetch('/api/units'),
+          fetch('/api/barrels')
+        ])
+
         if (categoriesResponse.ok) {
           const categoriesData = await categoriesResponse.json()
           setCategories(categoriesData)
         }
 
-        // Carregar unidades
-        const unitsResponse = await fetch('/api/units')
         if (unitsResponse.ok) {
           const unitsData = await unitsResponse.json()
           setUnits(unitsData)
+        }
+
+        if (barrelsResponse.ok) {
+          const barrelsData = await barrelsResponse.json()
+          // Filtrar apenas barrils ativos
+          const activeBarrels = barrelsData.filter((barrel: Barrel) => barrel.status === 'ACTIVE')
+          setBarrels(activeBarrels)
         }
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
@@ -75,6 +97,8 @@ export default function NewProductPage() {
           cost: parseFloat(formData.cost),
           minQuantity: parseInt(formData.minQuantity),
           maxQuantity: formData.maxQuantity ? parseInt(formData.maxQuantity) : null,
+          volumeRetiradaMl: formData.volumeRetiradaMl ? parseInt(formData.volumeRetiradaMl) : null,
+          barrelId: formData.barrelId || null,
         }),
       })
 
@@ -190,6 +214,121 @@ export default function NewProductPage() {
                 </div>
               </div>
 
+              {/* Seção de Tipo de Produto */}
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Tipo de Produto</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="productType" className="block text-sm font-medium text-gray-300 mb-2">
+                      Tipo *
+                    </label>
+                    <select
+                      id="productType"
+                      name="productType"
+                      required
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      value={formData.productType}
+                      onChange={handleChange}
+                    >
+                      <option value="UNIT">Produto Unitário</option>
+                      <option value="FRACTIONED">Produto Fracionado</option>
+                    </select>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Fracionado: vendido por volume (ml) de um barril
+                    </p>
+                  </div>
+
+                  {formData.productType === 'FRACTIONED' && (
+                    <>
+                      <div>
+                        <label htmlFor="volumeRetiradaMl" className="block text-sm font-medium text-gray-300 mb-2">
+                          Volume por Retirada (ml) *
+                        </label>
+                        <input
+                          type="number"
+                          id="volumeRetiradaMl"
+                          name="volumeRetiradaMl"
+                          required
+                          min="50"
+                          step="50"
+                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          placeholder="300"
+                          value={formData.volumeRetiradaMl}
+                          onChange={handleChange}
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          Ex: 300ml, 500ml, 1000ml
+                        </p>
+                      </div>
+
+                      <div>
+                        <label htmlFor="barrelId" className="block text-sm font-medium text-gray-300 mb-2">
+                          Barril *
+                        </label>
+                        <select
+                          id="barrelId"
+                          name="barrelId"
+                          required
+                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          value={formData.barrelId}
+                          onChange={handleChange}
+                        >
+                          <option value="">Selecione um barril</option>
+                          {barrels.map((barrel) => (
+                            <option key={barrel.id} value={barrel.id}>
+                              {barrel.name} - {Math.round(barrel.volumeDisponivelMl / 1000)}L disponível
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Barril ativo com volume disponível
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Seção de Estoque (apenas para produtos unitários) */}
+              {formData.productType === 'UNIT' && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">Controle de Estoque</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label htmlFor="minQuantity" className="block text-sm font-medium text-gray-300 mb-2">
+                        Estoque Mínimo
+                      </label>
+                      <input
+                        type="number"
+                        id="minQuantity"
+                        name="minQuantity"
+                        min="0"
+                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        value={formData.minQuantity}
+                        onChange={handleChange}
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="maxQuantity" className="block text-sm font-medium text-gray-300 mb-2">
+                        Estoque Máximo
+                      </label>
+                      <input
+                        type="number"
+                        id="maxQuantity"
+                        name="maxQuantity"
+                        min="0"
+                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        value={formData.maxQuantity}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="mt-6">
                 <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-2">
                   Descrição
@@ -248,44 +387,6 @@ export default function NewProductPage() {
               </div>
             </div>
 
-            <div className="bg-gray-800 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Controle de Estoque</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="minQuantity" className="block text-sm font-medium text-gray-300 mb-2">
-                    Estoque Mínimo *
-                  </label>
-                  <input
-                    type="number"
-                    id="minQuantity"
-                    name="minQuantity"
-                    min="0"
-                    required
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="0"
-                    value={formData.minQuantity}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="maxQuantity" className="block text-sm font-medium text-gray-300 mb-2">
-                    Estoque Máximo
-                  </label>
-                  <input
-                    type="number"
-                    id="maxQuantity"
-                    name="maxQuantity"
-                    min="0"
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Opcional"
-                    value={formData.maxQuantity}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-            </div>
 
             <div className="flex justify-end space-x-4">
               <Link

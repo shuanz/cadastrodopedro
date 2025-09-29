@@ -20,9 +20,14 @@ export async function GET() {
   
   try {
     const result = await client.query(`
-      SELECT p.*, i.quantity, i."minQuantity", i."maxQuantity"
-      FROM "Product" p
-      LEFT JOIN "Inventory" i ON p.id = i."productId"
+      SELECT p.*, i.quantity, i."minQuantity", i."maxQuantity",
+             c.name as category_name, u.name as unit_name, u.symbol as unit_symbol,
+             b.name as barrel_name, b."volumeDisponivelMl" as barrel_volume_available
+      FROM "products" p
+      LEFT JOIN "inventory" i ON p.id = i."productId"
+      LEFT JOIN "categories" c ON p."categoryId" = c.id
+      LEFT JOIN "units" u ON p."unitId" = u.id
+      LEFT JOIN "barrels" b ON p."barrelId" = b.id
       ORDER BY p."createdAt" DESC
     `)
 
@@ -32,12 +37,18 @@ export async function GET() {
       description: row.description,
       price: parseFloat(row.price),
       cost: row.cost ? parseFloat(row.cost) : null,
-      category: row.category,
-      unit: row.unit,
+      category: row.category_name,
+      unit: row.unit_name,
       barcode: row.barcode,
       isActive: row.isActive,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
+      // Campos para produtos fracionados
+      productType: row.productType || 'UNIT',
+      volumeRetiradaMl: row.volumeRetiradaMl,
+      barrelId: row.barrelId,
+      barrelName: row.barrel_name,
+      barrelVolumeAvailable: row.barrel_volume_available,
       inventory: {
         quantity: row.quantity || 0,
         minQuantity: row.minQuantity || 0,
@@ -80,12 +91,52 @@ export async function POST(request: NextRequest) {
       barcode,
       minQuantity,
       maxQuantity,
+      productType,
+      volumeRetiradaMl,
+      barrelId,
     } = await request.json()
+
+    // Validações para produtos fracionados
+    if (productType === 'FRACTIONED') {
+      if (!volumeRetiradaMl || volumeRetiradaMl <= 0) {
+        return NextResponse.json(
+          { error: "Volume de retirada é obrigatório para produtos fracionados" },
+          { status: 400 }
+        )
+      }
+      
+      if (!barrelId) {
+        return NextResponse.json(
+          { error: "Barril é obrigatório para produtos fracionados" },
+          { status: 400 }
+        )
+      }
+
+      // Verificar se o barril existe e está ativo
+      const barrelResult = await client.query(
+        'SELECT id, status FROM "barrels" WHERE id = $1',
+        [barrelId]
+      )
+
+      if (barrelResult.rows.length === 0) {
+        return NextResponse.json(
+          { error: "Barril não encontrado" },
+          { status: 400 }
+        )
+      }
+
+      if (barrelResult.rows[0].status !== 'ACTIVE') {
+        return NextResponse.json(
+          { error: "Barril deve estar ativo para vincular produtos" },
+          { status: 400 }
+        )
+      }
+    }
 
     // Verificar se já existe produto com o mesmo código de barras
     if (barcode) {
       const existingProduct = await client.query(
-        'SELECT id FROM "Product" WHERE barcode = $1',
+        'SELECT id FROM "products" WHERE barcode = $1',
         [barcode]
       )
 
@@ -97,13 +148,38 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Buscar IDs das categorias e unidades
+    const categoryResult = await client.query(
+      'SELECT id FROM "categories" WHERE name = $1',
+      [category]
+    )
+    
+    const unitResult = await client.query(
+      'SELECT id FROM "units" WHERE name = $1',
+      [unit]
+    )
+
+    if (categoryResult.rows.length === 0) {
+      return NextResponse.json(
+        { error: "Categoria não encontrada" },
+        { status: 400 }
+      )
+    }
+
+    if (unitResult.rows.length === 0) {
+      return NextResponse.json(
+        { error: "Unidade não encontrada" },
+        { status: 400 }
+      )
+    }
+
     // Criar produto e estoque em uma transação
     await client.query('BEGIN')
     
     try {
       const productResult = await client.query(`
-        INSERT INTO "Product" (id, name, description, price, cost, category, unit, barcode, "isActive", "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+        INSERT INTO "products" (id, name, description, price, cost, "categoryId", "unitId", barcode, "isActive", "productType", "volumeRetiradaMl", "barrelId", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
         RETURNING *
       `, [
         `product-${Date.now()}`,
@@ -111,24 +187,30 @@ export async function POST(request: NextRequest) {
         description,
         price,
         cost,
-        category,
-        unit,
+        categoryResult.rows[0].id,
+        unitResult.rows[0].id,
         barcode,
-        true
+        true,
+        productType || 'UNIT',
+        volumeRetiradaMl,
+        barrelId
       ])
 
       const product = productResult.rows[0]
 
-      await client.query(`
-        INSERT INTO "Inventory" (id, "productId", quantity, "minQuantity", "maxQuantity", "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-      `, [
-        `inventory-${Date.now()}`,
-        product.id,
-        0,
-        minQuantity,
-        maxQuantity
-      ])
+      // Criar estoque apenas para produtos unitários
+      if (productType !== 'FRACTIONED') {
+        await client.query(`
+          INSERT INTO "inventory" (id, "productId", quantity, "minQuantity", "maxQuantity", "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        `, [
+          `inventory-${Date.now()}`,
+          product.id,
+          0,
+          minQuantity,
+          maxQuantity
+        ])
+      }
 
       await client.query('COMMIT')
 

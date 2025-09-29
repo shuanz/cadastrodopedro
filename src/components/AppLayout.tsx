@@ -31,14 +31,15 @@ export default function AppLayout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
 
-  const menuItems = [
-    { name: "Dashboard", href: "/dashboard", icon: TrendingUp },
-    { name: "Produtos", href: "/products", icon: Package },
-    { name: "Estoque", href: "/inventory", icon: Package },
-    { name: "Vendas", href: "/sales", icon: ShoppingCart },
-    { name: "Usuários", href: "/users", icon: Users, adminOnly: true },
-    { name: "Configurações", href: "/settings", icon: Settings, adminOnly: true },
-  ]
+const menuItems = [
+  { name: "Dashboard", href: "/dashboard", icon: TrendingUp },
+  { name: "Produtos", href: "/products", icon: Package },
+  { name: "Estoque", href: "/inventory", icon: Package },
+  { name: "Barrils", href: "/barrels", icon: Package, adminOnly: true },
+  { name: "Vendas", href: "/sales", icon: ShoppingCart },
+  { name: "Usuários", href: "/users", icon: Users, adminOnly: true },
+  { name: "Configurações", href: "/settings", icon: Settings, adminOnly: true },
+]
 
   const filteredMenuItems = menuItems.filter(item => 
     !item.adminOnly || (session?.user as ExtendedUser)?.role === "ADMIN"
@@ -106,17 +107,18 @@ export default function AppLayout({ children }: LayoutProps) {
             >
               <Menu size={24} />
             </button>
-            <h2 className="text-2xl font-bold text-white">
-              {pathname === '/dashboard' && 'Dashboard'}
-              {pathname === '/products' && 'Produtos'}
-              {pathname === '/inventory' && 'Estoque'}
-              {pathname === '/sales' && 'Vendas'}
-              {pathname === '/users' && 'Usuários'}
-              {pathname === '/settings' && 'Configurações'}
-              {pathname.startsWith('/products/new') && 'Novo Produto'}
-              {pathname.startsWith('/products/') && pathname.includes('/edit') && 'Editar Produto'}
-              {pathname === '/sales/history' && 'Histórico de Vendas'}
-            </h2>
+        <h2 className="text-2xl font-bold text-white">
+          {pathname === '/dashboard' && 'Dashboard'}
+          {pathname === '/products' && 'Produtos'}
+          {pathname === '/inventory' && 'Estoque'}
+          {pathname === '/barrels' && 'Barrils'}
+          {pathname === '/sales' && 'Vendas'}
+          {pathname === '/users' && 'Usuários'}
+          {pathname === '/settings' && 'Configurações'}
+          {pathname.startsWith('/products/new') && 'Novo Produto'}
+          {pathname.startsWith('/products/') && pathname.includes('/edit') && 'Editar Produto'}
+          {pathname === '/sales/history' && 'Histórico de Vendas'}
+        </h2>
             <div className="flex items-center space-x-4">
               <span className="text-gray-300">Bem-vindo, {session?.user?.name}</span>
             </div>

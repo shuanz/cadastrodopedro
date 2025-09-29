@@ -22,6 +22,8 @@ model User {
   // Relacionamentos
   sales     Sale[]
   purchases Purchase[]
+  barrelMovements BarrelMovement[]
+  auditLogs AuditLog[]
 
   @@map("users")
 }
@@ -37,15 +39,23 @@ model Product {
   barcode     String?  @unique
   imageUrl    String?
   isActive    Boolean  @default(true)
+  
+  // Campos para produtos fracionados
+  productType ProductType @default(UNIT)
+  volumeRetiradaMl Int? // Volume em ml para produtos fracionados (300, 500, 1000)
+  barrelId    String? // Referência ao barril para produtos fracionados
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relacionamentos
   category    Category @relation(fields: [categoryId], references: [id])
   unit        Unit     @relation(fields: [unitId], references: [id])
+  barrel      Barrel?  @relation(fields: [barrelId], references: [id])
   inventory   Inventory?
   saleItems   SaleItem[]
   purchaseItems PurchaseItem[]
+  tickets     Ticket[]
 
   @@map("products")
 }
@@ -117,10 +127,14 @@ model SaleItem {
   quantity  Int
   price     Decimal @db.Decimal(10, 2)
   subtotal  Decimal @db.Decimal(10, 2)
+  
+  // Volume total em ml para produtos fracionados
+  volumeTotalMl Int? // quantity * volumeRetiradaMl
 
   // Relacionamentos
   sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id])
+  tickets   Ticket[]
 
   @@map("sale_items")
 }
@@ -171,4 +185,103 @@ enum PurchaseStatus {
   PENDING
   RECEIVED
   CANCELLED
+}
+
+// Novos modelos para sistema de barril fracionado
+
+model Barrel {
+  id                String   @id @default(cuid())
+  name              String   // Nome do barril (ex: "Barril Pio Sem Verasso #001")
+  volumeTotalMl     Int      // Volume total em ml (ex: 50000)
+  volumeDisponivelMl Int     // Volume disponível em ml
+  mlResiduoMinimo   Int      @default(50) // Volume mínimo para considerar resíduo
+  status            BarrelStatus @default(ACTIVE)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  closedAt          DateTime?
+
+  // Relacionamentos
+  products          Product[]
+  movements         BarrelMovement[]
+  tickets           Ticket[]
+
+  @@map("barrels")
+}
+
+model BarrelMovement {
+  id          String   @id @default(cuid())
+  barrelId    String
+  type        MovementType
+  volumeMl    Int      // Volume em ml da movimentação
+  reference   String?  // Referência (ex: "Sale #123", "Ajuste manual")
+  userId      String?  // Usuário que fez a movimentação
+  createdAt   DateTime @default(now())
+
+  // Relacionamentos
+  barrel      Barrel   @relation(fields: [barrelId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@map("barrel_movements")
+}
+
+model Ticket {
+  id            String   @id @default(cuid())
+  saleItemId    String
+  productId     String
+  barrelId      String?
+  sequence      Int      // Número sequencial da ficha (1, 2, 3...)
+  totalTickets  Int      // Total de fichas para este item
+  status        TicketStatus @default(PENDING)
+  qrCode        String?  // Código QR único
+  printedAt     DateTime?
+  consumedAt    DateTime?
+  createdAt     DateTime @default(now())
+
+  // Relacionamentos
+  saleItem      SaleItem @relation(fields: [saleItemId], references: [id], onDelete: Cascade)
+  product       Product  @relation(fields: [productId], references: [id])
+  barrel        Barrel?  @relation(fields: [barrelId], references: [id])
+
+  @@map("tickets")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String   // Ação realizada
+  entityType  String   // Tipo da entidade (Barrel, Product, Ticket, etc.)
+  entityId    String   // ID da entidade
+  userId      String   // Usuário que fez a ação
+  details     Json?    // Detalhes da ação em JSON
+  createdAt   DateTime @default(now())
+
+  // Relacionamentos
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+// Enums
+enum ProductType {
+  UNIT        // Produto unitário (ex: cerveja individual)
+  FRACTIONED  // Produto fracionado (ex: 300ml, 500ml, 1000ml)
+}
+
+enum BarrelStatus {
+  ACTIVE      // Barril ativo, aceitando vendas
+  CLOSED      // Barril encerrado, não aceita novas vendas
+  MAINTENANCE // Barril em manutenção
+}
+
+enum MovementType {
+  ENTRY       // Entrada de volume (abertura do barril)
+  SALE        // Baixa por venda
+  ADJUSTMENT  // Ajuste manual
+  LOSS        // Perda/derramamento
+  CLOSURE     // Encerramento do barril
+}
+
+enum TicketStatus {
+  PENDING     // Ficha pendente de retirada
+  CONSUMED    // Ficha consumida/retirada
+  CANCELLED   // Ficha cancelada
 }
