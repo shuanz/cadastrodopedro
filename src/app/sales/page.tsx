@@ -7,6 +7,7 @@ import SaleTicket from "@/components/SaleTicket"
 import DirectPrint from "@/components/DirectPrint"
 import SilentPrint from "@/components/SilentPrint"
 import AutoPrint from "@/components/AutoPrint"
+import FractionedTicketPrint from "@/components/FractionedTicketPrint"
 
 interface Product {
   id: string
@@ -56,6 +57,8 @@ export default function SalesPage() {
   const [showDirectPrint, setShowDirectPrint] = useState(false)
   const [showSilentPrint, setShowSilentPrint] = useState(false)
   const [showAutoPrint, setShowAutoPrint] = useState(false)
+  const [showFractionedTickets, setShowFractionedTickets] = useState(false)
+  const [fractionedTickets, setFractionedTickets] = useState<any[]>([])
 
   useEffect(() => {
     fetchProducts()
@@ -177,6 +180,13 @@ export default function SalesPage() {
         const saleData = await response.json()
         console.log("Dados da venda recebidos:", saleData)
         setLastSale(saleData.sale)
+        
+        // Verificar se há fichas fracionadas para imprimir
+        if (saleData.sale.tickets && saleData.sale.tickets.length > 0) {
+          console.log(`🖨️ Fichas fracionadas geradas: ${saleData.ticketsGenerated}`)
+          setFractionedTickets(saleData.sale.tickets)
+          setShowFractionedTickets(true)
+        }
         
         if (printOnly) {
           // Apenas imprimir, sem mostrar modal
@@ -454,6 +464,18 @@ export default function SalesPage() {
             <DirectPrint
               sale={lastSale}
               onComplete={() => setShowDirectPrint(false)}
+            />
+          </>
+        )}
+
+        {/* Fractioned Tickets Print Component */}
+        {showFractionedTickets && lastSale && fractionedTickets.length > 0 && (
+          <>
+            {console.log("Renderizando FractionedTicketPrint")}
+            <FractionedTicketPrint
+              sale={lastSale}
+              tickets={fractionedTickets}
+              onComplete={() => setShowFractionedTickets(false)}
             />
           </>
         )}
