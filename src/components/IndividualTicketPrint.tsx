@@ -7,14 +7,14 @@ interface Sale {
   discount?: number
   items: Array<{
     id: string
-    productId: string
     quantity: number
     price: number
     subtotal: number
     product: {
       name: string
-      category: string
-      unit: string
+      category?: string
+      unit?: string
+      price?: number
     }
   }>
 }

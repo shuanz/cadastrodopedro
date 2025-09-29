@@ -8,6 +8,7 @@ import DirectPrint from "@/components/DirectPrint"
 import SilentPrint from "@/components/SilentPrint"
 import AutoPrint from "@/components/AutoPrint"
 import FractionedTicketPrint from "@/components/FractionedTicketPrint"
+import IndividualTicketPrint from "@/components/IndividualTicketPrint"
 
 interface Product {
   id: string
@@ -61,6 +62,7 @@ export default function SalesPage() {
   const [showSilentPrint, setShowSilentPrint] = useState(false)
   const [showAutoPrint, setShowAutoPrint] = useState(false)
   const [showFractionedTickets, setShowFractionedTickets] = useState(false)
+  const [showIndividualTickets, setShowIndividualTickets] = useState(false)
   const [fractionedTickets, setFractionedTickets] = useState<Array<{
     id: string
     saleItemId: string
@@ -206,12 +208,14 @@ export default function SalesPage() {
         }
         
         if (printOnly) {
-          // Apenas imprimir, sem mostrar modal
-          console.log("Executando impressão automática")
-          setShowAutoPrint(true)
+          // Imprimir tickets individuais (um por produto vendido)
+          console.log("Executando impressão de tickets individuais")
+          setShowIndividualTickets(true)
           setShowTicket(false) // Garantir que o modal não apareça
           setShowDirectPrint(false) // Garantir que a impressão direta não execute
           setShowSilentPrint(false) // Garantir que a impressão silenciosa não execute
+          setShowAutoPrint(false) // Garantir que a impressão automática não execute
+          setShowFractionedTickets(false) // Garantir que tickets fracionados não executem
         } else {
           // Mostrar modal normalmente
           console.log("Executando venda com modal")
@@ -219,6 +223,7 @@ export default function SalesPage() {
           setShowDirectPrint(false) // Garantir que a impressão direta não execute
           setShowSilentPrint(false) // Garantir que a impressão silenciosa não execute
           setShowAutoPrint(false) // Garantir que a impressão automática não execute
+          setShowIndividualTickets(false) // Garantir que tickets individuais não executem
         }
         
         setSaleItems([])
@@ -481,6 +486,19 @@ export default function SalesPage() {
             <DirectPrint
               sale={lastSale}
               onComplete={() => setShowDirectPrint(false)}
+            />
+          </>
+        )}
+
+        {/* Individual Tickets Print Component */}
+        {showIndividualTickets && lastSale && (
+          <>
+            <IndividualTicketPrint
+              sale={lastSale}
+              onComplete={() => {
+                console.log("IndividualTicketPrint completado")
+                setShowIndividualTickets(false)
+              }}
             />
           </>
         )}
