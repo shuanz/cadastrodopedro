@@ -111,3 +111,81 @@ export async function PUT(
     client.release()
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const client = await pool.connect()
+  
+  try {
+    const session = await getServerSession(authOptions) as Session | null
+    
+    if (!session) {
+      return NextResponse.json(
+        { error: "Não autorizado" },
+        { status: 401 }
+      )
+    }
+
+    const { id } = await params
+
+    // Verificar se o produto existe
+    const productCheck = await client.query(
+      'SELECT id FROM "Product" WHERE id = $1',
+      [id]
+    )
+
+    if (productCheck.rows.length === 0) {
+      return NextResponse.json(
+        { error: "Produto não encontrado" },
+        { status: 404 }
+      )
+    }
+
+    // Verificar se há vendas associadas ao produto
+    const salesCheck = await client.query(
+      'SELECT COUNT(*) as count FROM "SaleItem" WHERE "productId" = $1',
+      [id]
+    )
+
+    if (parseInt(salesCheck.rows[0].count) > 0) {
+      return NextResponse.json(
+        { error: "Não é possível excluir produto com vendas associadas" },
+        { status: 400 }
+      )
+    }
+
+    // Deletar o estoque
+    const inventoryResult = await client.query(
+      'DELETE FROM "Inventory" WHERE "productId" = $1 RETURNING *',
+      [id]
+    )
+
+    if (inventoryResult.rows.length === 0) {
+      return NextResponse.json(
+        { error: "Estoque não encontrado" },
+        { status: 404 }
+      )
+    }
+
+    // Deletar o produto
+    await client.query(
+      'DELETE FROM "Product" WHERE id = $1',
+      [id]
+    )
+
+    return NextResponse.json(
+      { message: "Produto e estoque excluídos com sucesso" },
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error("Erro ao excluir produto:", error)
+    return NextResponse.json(
+      { error: "Erro interno do servidor" },
+      { status: 500 }
+    )
+  } finally {
+    client.release()
+  }
+}

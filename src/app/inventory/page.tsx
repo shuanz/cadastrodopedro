@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { Package, Plus, TrendingDown, AlertTriangle, Search } from "lucide-react"
+import { Package, Plus, TrendingDown, AlertTriangle, Search, Trash2 } from "lucide-react"
 
 interface InventoryItem {
   id: string
@@ -77,6 +77,30 @@ export default function InventoryPage() {
     } catch (error) {
       console.error("Erro ao atualizar estoque:", error)
       alert("Erro ao atualizar estoque")
+    }
+  }
+
+  const handleDeleteProduct = async (productId: string, productName: string) => {
+    if (!confirm(`Tem certeza que deseja excluir o produto "${productName}" e todo seu estoque? Esta ação não pode ser desfeita.`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/inventory/${productId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        // Remover o item do estado local
+        setInventory(inventory.filter(item => item.product.id !== productId))
+        alert("Produto excluído com sucesso!")
+      } else {
+        const data = await response.json()
+        alert(data.error || "Erro ao excluir produto")
+      }
+    } catch (error) {
+      console.error("Erro ao excluir produto:", error)
+      alert("Erro ao excluir produto")
     }
   }
 
@@ -296,6 +320,13 @@ export default function InventoryPage() {
                           }}
                           className="w-20 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
+                        <button
+                          onClick={() => handleDeleteProduct(item.product.id, item.product.name)}
+                          className="p-1 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded transition-colors"
+                          title="Excluir produto"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>
