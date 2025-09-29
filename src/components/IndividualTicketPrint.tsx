@@ -27,13 +27,13 @@ interface IndividualTicketPrintProps {
 export default function IndividualTicketPrint({ sale, onComplete }: IndividualTicketPrintProps) {
   const hasExecuted = useRef(false)
 
-  console.log("🚀 IndividualTicketPrint component mounted!", { sale, hasExecuted: hasExecuted.current })
+  console.log("IndividualTicketPrint component mounted!", { sale, hasExecuted: hasExecuted.current })
 
   useEffect(() => {
     if (hasExecuted.current) return
     hasExecuted.current = true
 
-    console.log("🖨️ IndividualTicketPrint iniciado!")
+    console.log("IndividualTicketPrint iniciado!")
     console.log("Dados da venda:", sale)
 
     const formatDate = (dateString: string) => {
@@ -75,12 +75,12 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
       const totalTickets = sale.items.length
       let currentTicketNumber = 1
 
-      console.log(`🖨️ Iniciando impressão de ${totalTickets} tickets (um por produto)...`)
+      console.log(`Iniciando impressão de ${totalTickets} tickets (um por produto)...`)
 
       for (const item of sale.items) {
         const ticketContent = generateIndividualTicketContent(item, currentTicketNumber, totalTickets)
         
-        console.log(`🖨️ Imprimindo ticket ${currentTicketNumber}/${totalTickets}: ${item.product.name} (${item.quantity}x)`)
+        console.log(`Imprimindo ticket ${currentTicketNumber}/${totalTickets}: ${item.product.name} (${item.quantity}x)`)
 
         // Criar iframe para impressão
         const iframe = document.createElement('iframe')
@@ -142,7 +142,7 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
         await new Promise(resolve => setTimeout(resolve, 200))
       }
 
-      console.log(`✅ Impressão de ${totalTickets} tickets concluída!`)
+      console.log(`Impressão de ${totalTickets} tickets concluída!`)
       onComplete()
     }
 
