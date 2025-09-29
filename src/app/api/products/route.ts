@@ -21,13 +21,11 @@ export async function GET() {
   try {
     const result = await client.query(`
       SELECT p.*, i.quantity, i."minQuantity", i."maxQuantity",
-             c.name as category_name, u.name as unit_name, u.symbol as unit_symbol,
-             b.name as barrel_name, b."volumeDisponivelMl" as barrel_volume_available
+             c.name as category_name, u.name as unit_name, u.symbol as unit_symbol
       FROM "products" p
       LEFT JOIN "inventory" i ON p.id = i."productId"
       LEFT JOIN "categories" c ON p.category = c.name
       LEFT JOIN "units" u ON p.unit = u.name
-      LEFT JOIN "barrels" b ON p."barrelId" = b.id
       ORDER BY p."createdAt" DESC
     `)
 
@@ -47,8 +45,8 @@ export async function GET() {
       productType: row.productType || 'UNIT',
       volumeRetiradaMl: row.volumeRetiradaMl,
       barrelId: row.barrelId,
-      barrelName: row.barrel_name,
-      barrelVolumeAvailable: row.barrel_volume_available,
+      barrelName: null,
+      barrelVolumeAvailable: null,
       inventory: {
         quantity: row.quantity || 0,
         minQuantity: row.minQuantity || 0,
@@ -96,41 +94,12 @@ export async function POST(request: NextRequest) {
       barrelId,
     } = await request.json()
 
-    // Validações para produtos fracionados
+    // Validações para produtos fracionados (desabilitado até criar tabela barrels)
     if (productType === 'FRACTIONED') {
-      if (!volumeRetiradaMl || volumeRetiradaMl <= 0) {
-        return NextResponse.json(
-          { error: "Volume de retirada é obrigatório para produtos fracionados" },
-          { status: 400 }
-        )
-      }
-      
-      if (!barrelId) {
-        return NextResponse.json(
-          { error: "Barril é obrigatório para produtos fracionados" },
-          { status: 400 }
-        )
-      }
-
-      // Verificar se o barril existe e está ativo
-      const barrelResult = await client.query(
-        'SELECT id, status FROM "barrels" WHERE id = $1',
-        [barrelId]
+      return NextResponse.json(
+        { error: "Produtos fracionados não estão disponíveis no momento" },
+        { status: 400 }
       )
-
-      if (barrelResult.rows.length === 0) {
-        return NextResponse.json(
-          { error: "Barril não encontrado" },
-          { status: 400 }
-        )
-      }
-
-      if (barrelResult.rows[0].status !== 'ACTIVE') {
-        return NextResponse.json(
-          { error: "Barril deve estar ativo para vincular produtos" },
-          { status: 400 }
-        )
-      }
     }
 
     // Verificar se já existe produto com o mesmo código de barras
@@ -178,8 +147,8 @@ export async function POST(request: NextRequest) {
     
     try {
       const productResult = await client.query(`
-        INSERT INTO "products" (id, name, description, price, cost, category, unit, barcode, "isActive", "productType", "volumeRetiradaMl", "barrelId", "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
+        INSERT INTO "products" (id, name, description, price, cost, category, unit, barcode, "isActive", "productType", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
         RETURNING *
       `, [
         `product-${Date.now()}`,
@@ -191,15 +160,13 @@ export async function POST(request: NextRequest) {
         unit,
         barcode,
         true,
-        productType || 'UNIT',
-        volumeRetiradaMl,
-        barrelId
+        'UNIT'
       ])
 
       const product = productResult.rows[0]
 
-      // Criar estoque apenas para produtos unitários
-      if (productType !== 'FRACTIONED') {
+      // Criar estoque para todos os produtos (apenas UNIT por enquanto)
+      if (true) {
         await client.query(`
           INSERT INTO "inventory" (id, "productId", quantity, "minQuantity", "maxQuantity", "createdAt", "updatedAt")
           VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
