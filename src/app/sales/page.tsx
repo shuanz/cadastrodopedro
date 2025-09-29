@@ -501,7 +501,12 @@ export default function SalesPage() {
         {/* Individual Tickets Print Component */}
         {showIndividualTickets && lastSale && (
           <>
-            {console.log("Renderizando IndividualTicketPrint", { showIndividualTickets, lastSale: !!lastSale })}
+            {console.log("🔍 CONDITION CHECK - IndividualTicketPrint:", { 
+              showIndividualTickets, 
+              lastSale: !!lastSale,
+              itemsCount: lastSale?.items?.length,
+              items: lastSale?.items 
+            })}
             <IndividualTicketPrint
               sale={lastSale}
               onComplete={() => {

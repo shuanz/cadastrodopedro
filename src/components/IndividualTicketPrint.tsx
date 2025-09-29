@@ -27,6 +27,8 @@ interface IndividualTicketPrintProps {
 export default function IndividualTicketPrint({ sale, onComplete }: IndividualTicketPrintProps) {
   const hasExecuted = useRef(false)
 
+  console.log("🚀 IndividualTicketPrint component mounted!", { sale, hasExecuted: hasExecuted.current })
+
   useEffect(() => {
     if (hasExecuted.current) return
     hasExecuted.current = true
