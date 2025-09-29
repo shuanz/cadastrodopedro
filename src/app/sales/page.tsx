@@ -211,12 +211,19 @@ export default function SalesPage() {
           // Imprimir tickets individuais (um por unidade vendida)
           console.log("Executando impressão de tickets individuais")
           console.log("Estados antes:", { showIndividualTickets, showTicket, showAutoPrint, showDirectPrint, showSilentPrint })
-          setShowIndividualTickets(true)
-          setShowTicket(false) // Garantir que o modal não apareça
-          setShowDirectPrint(false) // Garantir que a impressão direta não execute
-          setShowSilentPrint(false) // Garantir que a impressão silenciosa não execute
-          setShowAutoPrint(false) // Garantir que a impressão automática não execute
-          console.log("Estados após:", { showIndividualTickets: true, showTicket: false, showAutoPrint: false, showDirectPrint: false, showSilentPrint: false })
+          
+          // Garantir que TODOS os outros componentes estejam desabilitados
+          setShowTicket(false)
+          setShowDirectPrint(false)
+          setShowSilentPrint(false)
+          setShowAutoPrint(false)
+          setShowFractionedTickets(false)
+          
+          // Aguardar um pouco para garantir que os estados sejam atualizados
+          setTimeout(() => {
+            setShowIndividualTickets(true)
+            console.log("Estados após:", { showIndividualTickets: true, showTicket: false, showAutoPrint: false, showDirectPrint: false, showSilentPrint: false })
+          }, 100)
         } else {
           // Mostrar modal normalmente
           console.log("Executando venda com modal")
@@ -453,6 +460,7 @@ export default function SalesPage() {
               sale={lastSale}
               onClose={() => setShowTicket(false)}
               printOnly={false}
+              disablePrint={showIndividualTickets}
             />
           </>
         )}

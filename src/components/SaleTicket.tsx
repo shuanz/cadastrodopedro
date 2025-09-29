@@ -26,9 +26,10 @@ interface TicketProps {
   sale: Sale
   onClose: () => void
   printOnly?: boolean
+  disablePrint?: boolean // Nova prop para desabilitar impressão
 }
 
-export default function SaleTicket({ sale, onClose, printOnly = false }: TicketProps) {
+export default function SaleTicket({ sale, onClose, printOnly = false, disablePrint = false }: TicketProps) {
   const ticketRef = useRef<HTMLDivElement>(null)
 
   console.log("Dados da venda no ticket:", sale)
@@ -120,13 +121,13 @@ export default function SaleTicket({ sale, onClose, printOnly = false }: TicketP
   }, [sale.id])
 
   useEffect(() => {
-    // Auto print when component mounts (only if not printOnly)
-    if (!printOnly) {
+    // Auto print when component mounts (only if not printOnly and not disabled)
+    if (!printOnly && !disablePrint) {
       setTimeout(() => {
         handlePrint()
       }, 100)
     }
-  }, [printOnly, handlePrint])
+  }, [printOnly, disablePrint, handlePrint])
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
