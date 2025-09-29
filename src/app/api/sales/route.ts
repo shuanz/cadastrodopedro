@@ -110,9 +110,6 @@ export async function POST(request: NextRequest) {
       quantity: number
       price: number
       subtotal: number
-      volumeTotalMl?: number
-      productType?: string
-      barrelId?: string
     }> = []
 
     for (const item of items) {
@@ -204,7 +201,7 @@ export async function POST(request: NextRequest) {
         SELECT s.*, u.name as user_name,
                si.id as item_id, si."productId", si.quantity as item_quantity, 
                si.price as item_price, si.subtotal,
-               p.name as product_name, p."productType", p."volumeRetiradaMl",
+               p.name as product_name,
                c.name as category_name, u2.name as unit_name
         FROM "sales" s
         LEFT JOIN users u ON s."userId" = u.id
@@ -237,8 +234,6 @@ export async function POST(request: NextRequest) {
           subtotal: parseFloat(row.subtotal),
           product: {
             name: row.product_name,
-            productType: row.productType,
-            volumeRetiradaMl: row.volumeRetiradaMl,
             category: row.category_name,
             unit: row.unit_name
           }
