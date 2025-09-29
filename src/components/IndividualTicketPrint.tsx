@@ -57,9 +57,9 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
       ticketText += `${formatDate(sale.createdAt)}\n`
       ticketText += "-".repeat(32) + "\n"
       ticketText += `${item.product.name}\n`
-      ticketText += `1x R$ ${Number(item.price).toFixed(2)} = R$ ${Number(item.price).toFixed(2)}\n`
+      ticketText += `${item.quantity}x R$ ${Number(item.price).toFixed(2)} = R$ ${Number(item.subtotal).toFixed(2)}\n`
       ticketText += "-".repeat(32) + "\n"
-      ticketText += `TOTAL: R$ ${Number(item.price).toFixed(2)}\n`
+      ticketText += `TOTAL: R$ ${Number(item.subtotal).toFixed(2)}\n`
       ticketText += "=".repeat(32) + "\n"
       ticketText += "Obrigado pela preferência!\n"
       ticketText += "Volte sempre!\n"
@@ -69,77 +69,75 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
     }
 
     const printIndividualTickets = async () => {
-      // Calcular total de tickets (soma de todas as quantidades)
-      const totalTickets = sale.items.reduce((total, item) => total + item.quantity, 0)
+      // Gerar um ticket por produto vendido (não por unidade)
+      const totalTickets = sale.items.length
       let currentTicketNumber = 1
 
-      console.log(`🖨️ Iniciando impressão de ${totalTickets} tickets individuais...`)
+      console.log(`🖨️ Iniciando impressão de ${totalTickets} tickets (um por produto)...`)
 
       for (const item of sale.items) {
-        for (let i = 0; i < item.quantity; i++) {
-          const ticketContent = generateIndividualTicketContent(item, currentTicketNumber, totalTickets)
-          
-          console.log(`🖨️ Imprimindo ticket ${currentTicketNumber}/${totalTickets}: ${item.product.name}`)
+        const ticketContent = generateIndividualTicketContent(item, currentTicketNumber, totalTickets)
+        
+        console.log(`🖨️ Imprimindo ticket ${currentTicketNumber}/${totalTickets}: ${item.product.name} (${item.quantity}x)`)
 
-          // Criar iframe para impressão
-          const iframe = document.createElement('iframe')
-          iframe.style.display = 'none'
-          document.body.appendChild(iframe)
+        // Criar iframe para impressão
+        const iframe = document.createElement('iframe')
+        iframe.style.display = 'none'
+        document.body.appendChild(iframe)
+        
+        const iframeDoc = iframe.contentWindow?.document
+        if (iframeDoc) {
+          iframeDoc.write(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <title>Ticket ${currentTicketNumber}/${totalTickets}</title>
+                <style>
+                  body {
+                    font-family: 'Courier New', monospace;
+                    font-size: 12px;
+                    line-height: 1.2;
+                    margin: 0;
+                    padding: 20px;
+                    white-space: pre-line;
+                  }
+                  @page { 
+                    margin: 0; 
+                    size: 80mm 200mm; 
+                  }
+                </style>
+              </head>
+              <body>
+                ${ticketContent}
+              </body>
+            </html>
+          `)
+          iframeDoc.close()
           
-          const iframeDoc = iframe.contentWindow?.document
-          if (iframeDoc) {
-            iframeDoc.write(`
-              <!DOCTYPE html>
-              <html>
-                <head>
-                  <title>Ticket ${currentTicketNumber}/${totalTickets}</title>
-                  <style>
-                    body {
-                      font-family: 'Courier New', monospace;
-                      font-size: 12px;
-                      line-height: 1.2;
-                      margin: 0;
-                      padding: 20px;
-                      white-space: pre-line;
-                    }
-                    @page { 
-                      margin: 0; 
-                      size: 80mm 200mm; 
-                    }
-                  </style>
-                </head>
-                <body>
-                  ${ticketContent}
-                </body>
-              </html>
-            `)
-            iframeDoc.close()
-            
-            // Aguardar carregamento e imprimir
-            await new Promise(resolve => {
-              iframe.onload = () => {
-                setTimeout(() => {
-                  try {
-                    iframe.contentWindow?.print()
-                    setTimeout(() => {
-                      document.body.removeChild(iframe)
-                      resolve(true)
-                    }, 1000)
-                  } catch (error) {
-                    console.error('Erro ao imprimir:', error)
+          // Aguardar carregamento e imprimir
+          await new Promise(resolve => {
+            iframe.onload = () => {
+              setTimeout(() => {
+                try {
+                  iframe.contentWindow?.print()
+                  setTimeout(() => {
                     document.body.removeChild(iframe)
                     resolve(true)
-                  }
-                }, 500)
-              }
-            })
-          }
-
-          currentTicketNumber++
-          
-          // Pequena pausa entre tickets para evitar conflitos
-          await new Promise(resolve => setTimeout(resolve, 200))
+                  }, 1000)
+                } catch (error) {
+                  console.error('Erro ao imprimir:', error)
+                  document.body.removeChild(iframe)
+                  resolve(true)
+                }
+              }, 500)
+            }
+          })
         }
+
+        currentTicketNumber++
+        
+        // Pequena pausa entre tickets para evitar conflitos
+        await new Promise(resolve => setTimeout(resolve, 200))
       }
 
       console.log(`✅ Impressão de ${totalTickets} tickets concluída!`)
