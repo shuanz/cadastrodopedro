@@ -93,7 +93,7 @@ async function main() {
   }
 
   // Criar alguns produtos de exemplo
-  const existingProducts = await prisma.product.count()
+    const existingProducts = await prisma.product.count()
   
   if (existingProducts === 0) {
     console.log('📦 Criando produtos de exemplo...')
