@@ -8,7 +8,6 @@ import DirectPrint from "@/components/DirectPrint"
 import SilentPrint from "@/components/SilentPrint"
 import AutoPrint from "@/components/AutoPrint"
 import FractionedTicketPrint from "@/components/FractionedTicketPrint"
-import IndividualTicketPrint from "@/components/IndividualTicketPrint"
 
 interface Product {
   id: string
@@ -494,25 +493,6 @@ export default function SalesPage() {
             <DirectPrint
               sale={lastSale}
               onComplete={() => setShowDirectPrint(false)}
-            />
-          </>
-        )}
-
-        {/* Individual Tickets Print Component */}
-        {showIndividualTickets && lastSale && (
-          <>
-            {console.log("CONDITION CHECK - IndividualTicketPrint:", { 
-              showIndividualTickets, 
-              lastSale: !!lastSale,
-              itemsCount: lastSale?.items?.length,
-              items: lastSale?.items 
-            })}
-            <IndividualTicketPrint
-              sale={lastSale}
-              onComplete={() => {
-                console.log("IndividualTicketPrint completado")
-                setShowIndividualTickets(false)
-              }}
             />
           </>
         )}
