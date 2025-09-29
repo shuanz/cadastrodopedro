@@ -100,7 +100,7 @@ export async function PUT(
   try {
     const session = await getServerSession(authOptions) as Session | null
     
-    if (!session || (session.user as any)?.role !== "ADMIN") {
+    if (!session || (session.user as { role?: string })?.role !== "ADMIN") {
       return NextResponse.json(
         { error: "Não autorizado" },
         { status: 401 }
@@ -202,7 +202,7 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions) as Session | null
     
-    if (!session || (session.user as any)?.role !== "ADMIN") {
+    if (!session || (session.user as { role?: string })?.role !== "ADMIN") {
       return NextResponse.json(
         { error: "Não autorizado" },
         { status: 401 }

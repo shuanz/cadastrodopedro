@@ -120,7 +120,7 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
               }
             }, 3000)
             
-          } catch (error) {
+          } catch {
             resolve(false)
           }
         } else {

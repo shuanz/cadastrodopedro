@@ -58,7 +58,21 @@ export default function SalesPage() {
   const [showSilentPrint, setShowSilentPrint] = useState(false)
   const [showAutoPrint, setShowAutoPrint] = useState(false)
   const [showFractionedTickets, setShowFractionedTickets] = useState(false)
-  const [fractionedTickets, setFractionedTickets] = useState<any[]>([])
+  const [fractionedTickets, setFractionedTickets] = useState<Array<{
+    id: string
+    saleItemId: string
+    productId: string
+    barrelId?: string
+    sequence: number
+    totalTickets: number
+    status: string
+    qrCode?: string
+    createdAt: string
+    product: {
+      name: string
+      volumeRetiradaMl: number
+    }
+  }>>([])
 
   useEffect(() => {
     fetchProducts()
