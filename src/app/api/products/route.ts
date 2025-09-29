@@ -41,10 +41,10 @@ export async function GET() {
       isActive: row.isActive,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
-      // Campos para produtos fracionados
-      productType: row.productType || 'UNIT',
-      volumeRetiradaMl: row.volumeRetiradaMl,
-      barrelId: row.barrelId,
+      // Campos para produtos fracionados (desabilitado)
+      productType: 'UNIT',
+      volumeRetiradaMl: null,
+      barrelId: null,
       barrelName: null,
       barrelVolumeAvailable: null,
       inventory: {
@@ -147,8 +147,8 @@ export async function POST(request: NextRequest) {
     
     try {
       const productResult = await client.query(`
-        INSERT INTO "products" (id, name, description, price, cost, category, unit, barcode, "isActive", "productType", "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+        INSERT INTO "products" (id, name, description, price, cost, category, unit, barcode, "isActive", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
         RETURNING *
       `, [
         `product-${Date.now()}`,
@@ -159,8 +159,7 @@ export async function POST(request: NextRequest) {
         category,
         unit,
         barcode,
-        true,
-        'UNIT'
+        true
       ])
 
       const product = productResult.rows[0]
