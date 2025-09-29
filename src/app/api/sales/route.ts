@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
         quantity: item.quantity,
         price: item.price,
         subtotal,
-        volumeTotalMl: product.productType === 'FRACTIONED' ? item.quantity * product.volumeRetiradaMl : null,
+        volumeTotalMl: product.productType === 'FRACTIONED' ? item.quantity * product.volumeRetiradaMl : undefined,
         productType: product.productType,
         barrelId: product.barrel_id
       })
