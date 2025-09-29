@@ -34,6 +34,8 @@ export default function SilentPrint({ sale, onComplete }: SilentPrintProps) {
     if (hasExecuted.current) return
     hasExecuted.current = true
 
+    console.log("🚨 SilentPrint está sendo executado! Isso não deveria acontecer com tickets individuais!")
+
     const formatDate = (dateString: string) => {
       if (!dateString) return 'Data não disponível'
       const date = new Date(dateString)

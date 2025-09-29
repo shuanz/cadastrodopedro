@@ -34,6 +34,9 @@ export default function AutoPrint({ sale, onComplete }: AutoPrintProps) {
     if (hasExecuted.current) return
     hasExecuted.current = true
 
+    console.log("🚨 AutoPrint está sendo executado! Isso não deveria acontecer com tickets individuais!")
+    console.log("Dados da venda no AutoPrint:", sale)
+
     const formatDate = (dateString: string) => {
       if (!dateString) return 'Data não disponível'
       const date = new Date(dateString)

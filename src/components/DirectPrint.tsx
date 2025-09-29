@@ -34,6 +34,8 @@ export default function DirectPrint({ sale, onComplete }: DirectPrintProps) {
     if (hasExecuted.current) return
     hasExecuted.current = true
 
+    console.log("🚨 DirectPrint está sendo executado! Isso não deveria acontecer com tickets individuais!")
+
     const formatDate = (dateString: string) => {
       if (!dateString) return 'Data não disponível'
       const date = new Date(dateString)
