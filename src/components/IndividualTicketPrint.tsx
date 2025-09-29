@@ -80,14 +80,23 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
       let currentTicketNumber = 1
       console.log(`Gerando ${totalTickets} tickets para impressão em lote...`)
 
-      // Concatenar todos os tickets em um único documento
-      let allTicketsContent = ""
+      // Concatenar todos os tickets em um único documento com quebras de página
+      let allTicketsHTML = ""
       
       for (const item of sale.items) {
         // Gerar um ticket para cada unidade deste produto
         for (let unit = 0; unit < item.quantity; unit++) {
           const ticketContent = generateIndividualTicketContent(item, currentTicketNumber, totalTickets)
-          allTicketsContent += ticketContent + "\n\n" // Adicionar espaçamento entre tickets
+          
+          // Criar uma div para cada ticket com quebra de página
+          const isLastTicket = currentTicketNumber === totalTickets
+          const pageBreakClass = isLastTicket ? "" : "ticket-page"
+          
+          allTicketsHTML += `
+            <div class="ticket ${pageBreakClass}">
+              <pre>${ticketContent}</pre>
+            </div>
+          `
           
           console.log(`Gerando ticket ${currentTicketNumber}/${totalTickets}: ${item.product.name} (unidade ${unit + 1})`)
           currentTicketNumber++
@@ -108,6 +117,16 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
               <title>Tickets de Venda - ${totalTickets} tickets</title>
               <style>
                 body {
+                  margin: 0;
+                  padding: 0;
+                  font-family: 'Courier New', monospace;
+                }
+                .ticket {
+                  width: 100%;
+                  margin: 0;
+                  padding: 0;
+                }
+                .ticket pre {
                   font-family: 'Courier New', monospace;
                   font-size: 12px;
                   line-height: 1.2;
@@ -115,17 +134,25 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
                   padding: 20px;
                   white-space: pre-line;
                 }
+                .ticket-page {
+                  page-break-after: always;
+                }
                 @page { 
                   margin: 0; 
                   size: 80mm 200mm; 
                 }
-                .ticket-break {
-                  page-break-after: always;
+                @media print {
+                  .ticket-page {
+                    page-break-after: always;
+                  }
+                  .ticket:last-child {
+                    page-break-after: avoid;
+                  }
                 }
               </style>
             </head>
             <body>
-              ${allTicketsContent}
+              ${allTicketsHTML}
             </body>
           </html>
         `)
