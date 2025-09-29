@@ -35,7 +35,7 @@ const menuItems = [
   { name: "Dashboard", href: "/dashboard", icon: TrendingUp },
   { name: "Produtos", href: "/products", icon: Package },
   { name: "Estoque", href: "/inventory", icon: Package },
-  { name: "Barrils", href: "/barrels", icon: Package, adminOnly: true },
+  // { name: "Barrils", href: "/barrels", icon: Package, adminOnly: true }, // Temporariamente desabilitado
   { name: "Vendas", href: "/sales", icon: ShoppingCart },
   { name: "Usuários", href: "/users", icon: Users, adminOnly: true },
   { name: "Configurações", href: "/settings", icon: Settings, adminOnly: true },
@@ -111,7 +111,7 @@ const menuItems = [
           {pathname === '/dashboard' && 'Dashboard'}
           {pathname === '/products' && 'Produtos'}
           {pathname === '/inventory' && 'Estoque'}
-          {pathname === '/barrels' && 'Barrils'}
+          {/* {pathname === '/barrels' && 'Barrils'} */}
           {pathname === '/sales' && 'Vendas'}
           {pathname === '/users' && 'Usuários'}
           {pathname === '/settings' && 'Configurações'}
