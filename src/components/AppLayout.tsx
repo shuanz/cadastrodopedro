@@ -11,7 +11,8 @@ import {
   Users, 
   LogOut,
   Menu,
-  X
+  X,
+  Settings
 } from "lucide-react"
 
 interface ExtendedUser {
@@ -36,6 +37,7 @@ export default function AppLayout({ children }: LayoutProps) {
     { name: "Estoque", href: "/inventory", icon: Package },
     { name: "Vendas", href: "/sales", icon: ShoppingCart },
     { name: "Usuários", href: "/users", icon: Users, adminOnly: true },
+    { name: "Configurações", href: "/settings", icon: Settings, adminOnly: true },
   ]
 
   const filteredMenuItems = menuItems.filter(item => 
@@ -110,6 +112,7 @@ export default function AppLayout({ children }: LayoutProps) {
               {pathname === '/inventory' && 'Estoque'}
               {pathname === '/sales' && 'Vendas'}
               {pathname === '/users' && 'Usuários'}
+              {pathname === '/settings' && 'Configurações'}
               {pathname.startsWith('/products/new') && 'Novo Produto'}
               {pathname.startsWith('/products/') && pathname.includes('/edit') && 'Editar Produto'}
               {pathname === '/sales/history' && 'Histórico de Vendas'}

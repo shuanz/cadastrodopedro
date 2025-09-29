@@ -32,8 +32,8 @@ model Product {
   description String?
   price       Decimal  @db.Decimal(10, 2)
   cost        Decimal  @db.Decimal(10, 2)
-  category    String
-  unit        String   // unidade, kg, litro, etc.
+  categoryId  String
+  unitId      String
   barcode     String?  @unique
   imageUrl    String?
   isActive    Boolean  @default(true)
@@ -41,11 +41,42 @@ model Product {
   updatedAt   DateTime @updatedAt
 
   // Relacionamentos
+  category    Category @relation(fields: [categoryId], references: [id])
+  unit        Unit     @relation(fields: [unitId], references: [id])
   inventory   Inventory?
   saleItems   SaleItem[]
   purchaseItems PurchaseItem[]
 
   @@map("products")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  products    Product[]
+
+  @@map("categories")
+}
+
+model Unit {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  symbol      String   @unique // un, kg, L, etc.
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  products    Product[]
+
+  @@map("units")
 }
 
 model Inventory {
