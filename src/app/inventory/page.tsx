@@ -41,11 +41,20 @@ export default function InventoryPage() {
   }, [searchParams])
 
   const fetchInventory = async () => {
+    setLoading(true)
     try {
-      const response = await fetch("/api/inventory")
+      const response = await fetch("/api/inventory", {
+        cache: 'no-store', // Força buscar dados atualizados
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         setInventory(data)
+        console.log("Estoque atualizado:", data.length, "itens")
+      } else {
+        console.error("Erro na resposta da API:", response.status)
       }
     } catch (error) {
       console.error("Erro ao buscar estoque:", error)
@@ -230,6 +239,13 @@ export default function InventoryPage() {
                 }`}
               >
                 Sem Estoque
+              </button>
+              <button
+                onClick={fetchInventory}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                title="Atualizar dados do servidor"
+              >
+                🔄 Atualizar
               </button>
             </div>
           </div>

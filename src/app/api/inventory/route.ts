@@ -18,8 +18,8 @@ export async function GET() {
   try {
     const result = await client.query(`
       SELECT i.*, p.name, p.category, p.unit, p.price, p."isActive"
-      FROM "Inventory" i
-      LEFT JOIN "Product" p ON i."productId" = p.id
+      FROM "inventory" i
+      LEFT JOIN "products" p ON i."productId" = p.id
       ORDER BY p.name ASC
     `)
 
