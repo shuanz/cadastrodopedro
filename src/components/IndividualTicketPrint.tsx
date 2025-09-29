@@ -92,7 +92,7 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
       let currentTicketNumber = 1
       console.log(`🚀 EXECUTANDO IMPRESSÃO EM LOTE: ${totalTickets} tickets para impressão em lote...`)
 
-      // Concatenar todos os tickets em um único documento com quebras de página
+      // Concatenar todos os tickets em um único documento sem quebras de página
       let allTicketsHTML = ""
       
       for (const item of sale.items) {
@@ -100,12 +100,9 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
         for (let unit = 0; unit < item.quantity; unit++) {
           const ticketContent = generateIndividualTicketContent(item, currentTicketNumber, totalTickets)
           
-          // Criar uma div para cada ticket com quebra de página
-          const isLastTicket = currentTicketNumber === totalTickets
-          const pageBreakClass = isLastTicket ? "" : "ticket-page"
-          
+          // Criar uma div para cada ticket sem quebra de página
           allTicketsHTML += `
-            <div class="ticket ${pageBreakClass}">
+            <div class="ticket">
               <pre>${ticketContent}</pre>
             </div>
           `
@@ -137,6 +134,11 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
                   width: 100%;
                   margin: 0;
                   padding: 0;
+                  border-bottom: 2px dashed #ccc;
+                  margin-bottom: 20px;
+                }
+                .ticket:last-child {
+                  border-bottom: none;
                 }
                 .ticket pre {
                   font-family: 'Courier New', monospace;
@@ -146,20 +148,9 @@ export default function IndividualTicketPrint({ sale, onComplete }: IndividualTi
                   padding: 20px;
                   white-space: pre-line;
                 }
-                .ticket-page {
-                  page-break-after: always;
-                }
                 @page { 
                   margin: 0; 
-                  size: 80mm 200mm; 
-                }
-                @media print {
-                  .ticket-page {
-                    page-break-after: always;
-                  }
-                  .ticket:last-child {
-                    page-break-after: avoid;
-                  }
+                  size: A4; 
                 }
               </style>
             </head>
