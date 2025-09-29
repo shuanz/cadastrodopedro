@@ -5,6 +5,19 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Save } from "lucide-react"
 
+interface Category {
+  id: string
+  name: string
+  description?: string
+}
+
+interface Unit {
+  id: string
+  name: string
+  symbol: string
+  description?: string
+}
+
 interface Product {
   id: string
   name: string
@@ -26,6 +39,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [product, setProduct] = useState<Product | null>(null)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [units, setUnits] = useState<Unit[]>([])
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -40,12 +55,29 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   })
 
   useEffect(() => {
-    const fetchProduct = async () => {
+    const loadData = async () => {
       try {
         const resolvedParams = await params
-        const response = await fetch(`/api/products/${resolvedParams.id}`)
-        if (response.ok) {
-          const data = await response.json()
+        
+        // Carregar categorias e unidades em paralelo
+        const [categoriesResponse, unitsResponse, productResponse] = await Promise.all([
+          fetch('/api/categories'),
+          fetch('/api/units'),
+          fetch(`/api/products/${resolvedParams.id}`)
+        ])
+
+        if (categoriesResponse.ok) {
+          const categoriesData = await categoriesResponse.json()
+          setCategories(categoriesData)
+        }
+
+        if (unitsResponse.ok) {
+          const unitsData = await unitsResponse.json()
+          setUnits(unitsData)
+        }
+
+        if (productResponse.ok) {
+          const data = await productResponse.json()
           setProduct(data)
           setFormData({
             name: data.name,
@@ -63,14 +95,14 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           router.push("/products")
         }
       } catch (error) {
-        console.error("Erro ao buscar produto:", error)
+        console.error("Erro ao carregar dados:", error)
         router.push("/products")
       } finally {
         setLoading(false)
       }
     }
 
-    fetchProduct()
+    loadData()
   }, [params, router])
 
 
@@ -178,11 +210,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                     onChange={handleChange}
                   >
                     <option value="">Selecione uma categoria</option>
-                    <option value="Bebidas">Bebidas</option>
-                    <option value="Comidas">Comidas</option>
-                    <option value="Petiscos">Petiscos</option>
-                    <option value="Doces">Doces</option>
-                    <option value="Outros">Outros</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.name}>
+                        {category.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -199,13 +231,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                     onChange={handleChange}
                   >
                     <option value="">Selecione a unidade</option>
-                    <option value="unidade">Unidade</option>
-                    <option value="kg">Quilograma</option>
-                    <option value="g">Grama</option>
-                    <option value="litro">Litro</option>
-                    <option value="ml">Mililitro</option>
-                    <option value="caixa">Caixa</option>
-                    <option value="pacote">Pacote</option>
+                    {units.map((unit) => (
+                      <option key={unit.id} value={unit.name}>
+                        {unit.name} ({unit.symbol})
+                      </option>
+                    ))}
                   </select>
                 </div>
 

@@ -1,13 +1,28 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Save } from "lucide-react"
 
+interface Category {
+  id: string
+  name: string
+  description?: string
+}
+
+interface Unit {
+  id: string
+  name: string
+  symbol: string
+  description?: string
+}
+
 export default function NewProductPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [units, setUnits] = useState<Unit[]>([])
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -19,6 +34,30 @@ export default function NewProductPage() {
     minQuantity: "0",
     maxQuantity: "",
   })
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Carregar categorias
+        const categoriesResponse = await fetch('/api/categories')
+        if (categoriesResponse.ok) {
+          const categoriesData = await categoriesResponse.json()
+          setCategories(categoriesData)
+        }
+
+        // Carregar unidades
+        const unitsResponse = await fetch('/api/units')
+        if (unitsResponse.ok) {
+          const unitsData = await unitsResponse.json()
+          setUnits(unitsData)
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error)
+      }
+    }
+
+    loadData()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -106,11 +145,11 @@ export default function NewProductPage() {
                     onChange={handleChange}
                   >
                     <option value="">Selecione uma categoria</option>
-                    <option value="Bebidas">Bebidas</option>
-                    <option value="Comidas">Comidas</option>
-                    <option value="Petiscos">Petiscos</option>
-                    <option value="Doces">Doces</option>
-                    <option value="Outros">Outros</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.name}>
+                        {category.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -127,13 +166,11 @@ export default function NewProductPage() {
                     onChange={handleChange}
                   >
                     <option value="">Selecione a unidade</option>
-                    <option value="unidade">Unidade</option>
-                    <option value="kg">Quilograma</option>
-                    <option value="g">Grama</option>
-                    <option value="litro">Litro</option>
-                    <option value="ml">Mililitro</option>
-                    <option value="caixa">Caixa</option>
-                    <option value="pacote">Pacote</option>
+                    {units.map((unit) => (
+                      <option key={unit.id} value={unit.name}>
+                        {unit.name} ({unit.symbol})
+                      </option>
+                    ))}
                   </select>
                 </div>
 
