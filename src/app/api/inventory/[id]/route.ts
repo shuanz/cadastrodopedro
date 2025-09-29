@@ -43,7 +43,7 @@ export async function PUT(
 
     // Verificar se o produto existe
     const productCheck = await client.query(
-      'SELECT id FROM "Product" WHERE id = $1',
+      'SELECT id FROM "products" WHERE id = $1',
       [id]
     )
 
@@ -56,7 +56,7 @@ export async function PUT(
 
     // Atualizar o estoque
     const result = await client.query(`
-      UPDATE "Inventory" 
+      UPDATE "inventory" 
       SET quantity = $1, "updatedAt" = NOW()
       WHERE "productId" = $2
       RETURNING *
@@ -72,8 +72,8 @@ export async function PUT(
     // Buscar dados completos do produto e estoque
     const inventoryResult = await client.query(`
       SELECT i.*, p.name, p.category, p.unit, p.price, p."isActive"
-      FROM "Inventory" i
-      LEFT JOIN "Product" p ON i."productId" = p.id
+      FROM "inventory" i
+      LEFT JOIN "products" p ON i."productId" = p.id
       WHERE i."productId" = $1
     `, [id])
 
@@ -132,7 +132,7 @@ export async function DELETE(
 
     // Verificar se o produto existe
     const productCheck = await client.query(
-      'SELECT id FROM "Product" WHERE id = $1',
+      'SELECT id FROM "products" WHERE id = $1',
       [id]
     )
 
@@ -145,7 +145,7 @@ export async function DELETE(
 
     // Verificar se há vendas associadas ao produto
     const salesCheck = await client.query(
-      'SELECT COUNT(*) as count FROM "SaleItem" WHERE "productId" = $1',
+      'SELECT COUNT(*) as count FROM "sale_items" WHERE "productId" = $1',
       [id]
     )
 
@@ -158,7 +158,7 @@ export async function DELETE(
 
     // Deletar o estoque
     const inventoryResult = await client.query(
-      'DELETE FROM "Inventory" WHERE "productId" = $1 RETURNING *',
+      'DELETE FROM "inventory" WHERE "productId" = $1 RETURNING *',
       [id]
     )
 
@@ -171,7 +171,7 @@ export async function DELETE(
 
     // Deletar o produto
     await client.query(
-      'DELETE FROM "Product" WHERE id = $1',
+      'DELETE FROM "products" WHERE id = $1',
       [id]
     )
 

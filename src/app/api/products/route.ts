@@ -25,8 +25,8 @@ export async function GET() {
              b.name as barrel_name, b."volumeDisponivelMl" as barrel_volume_available
       FROM "products" p
       LEFT JOIN "inventory" i ON p.id = i."productId"
-      LEFT JOIN "categories" c ON p."categoryId" = c.id
-      LEFT JOIN "units" u ON p."unitId" = u.id
+      LEFT JOIN "categories" c ON p.category = c.name
+      LEFT JOIN "units" u ON p.unit = u.name
       LEFT JOIN "barrels" b ON p."barrelId" = b.id
       ORDER BY p."createdAt" DESC
     `)
@@ -148,14 +148,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Buscar IDs das categorias e unidades
+    // Verificar se categoria e unidade existem
     const categoryResult = await client.query(
-      'SELECT id FROM "categories" WHERE name = $1',
+      'SELECT name FROM "categories" WHERE name = $1',
       [category]
     )
     
     const unitResult = await client.query(
-      'SELECT id FROM "units" WHERE name = $1',
+      'SELECT name FROM "units" WHERE name = $1',
       [unit]
     )
 
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
     
     try {
       const productResult = await client.query(`
-        INSERT INTO "products" (id, name, description, price, cost, "categoryId", "unitId", barcode, "isActive", "productType", "volumeRetiradaMl", "barrelId", "createdAt", "updatedAt")
+        INSERT INTO "products" (id, name, description, price, cost, category, unit, barcode, "isActive", "productType", "volumeRetiradaMl", "barrelId", "createdAt", "updatedAt")
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
         RETURNING *
       `, [
@@ -187,8 +187,8 @@ export async function POST(request: NextRequest) {
         description,
         price,
         cost,
-        categoryResult.rows[0].id,
-        unitResult.rows[0].id,
+        category,
+        unit,
         barcode,
         true,
         productType || 'UNIT',

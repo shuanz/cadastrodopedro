@@ -26,8 +26,8 @@ export async function GET(
     
     const result = await client.query(`
       SELECT p.*, i.quantity, i."minQuantity", i."maxQuantity"
-      FROM "Product" p
-      LEFT JOIN "Inventory" i ON p.id = i."productId"
+      FROM "products" p
+      LEFT JOIN "inventory" i ON p.id = i."productId"
       WHERE p.id = $1
     `, [id])
 
@@ -102,7 +102,7 @@ export async function PUT(
 
     // Verificar se o produto existe
     const existingProductResult = await client.query(
-      'SELECT id FROM "Product" WHERE id = $1',
+      'SELECT id FROM "products" WHERE id = $1',
       [id]
     )
 
@@ -116,7 +116,7 @@ export async function PUT(
     // Verificar se já existe outro produto com o mesmo código de barras
     if (barcode) {
       const duplicateProductResult = await client.query(
-        'SELECT id FROM "Product" WHERE barcode = $1 AND id != $2',
+        'SELECT id FROM "products" WHERE barcode = $1 AND id != $2',
         [barcode, id]
       )
 
@@ -134,7 +134,7 @@ export async function PUT(
     try {
       // Atualizar produto
       await client.query(`
-        UPDATE "Product" 
+        UPDATE "products" 
         SET name = $1, description = $2, price = $3, cost = $4, 
             category = $5, unit = $6, barcode = $7, "isActive" = $8, "updatedAt" = NOW()
         WHERE id = $9
@@ -142,7 +142,7 @@ export async function PUT(
 
       // Atualizar estoque
       await client.query(`
-        UPDATE "Inventory" 
+        UPDATE "inventory" 
         SET "minQuantity" = $1, "maxQuantity" = $2, "updatedAt" = NOW()
         WHERE "productId" = $3
       `, [minQuantity, maxQuantity, id])
@@ -152,8 +152,8 @@ export async function PUT(
       // Buscar produto atualizado
       const updatedProductResult = await client.query(`
         SELECT p.*, i.quantity, i."minQuantity", i."maxQuantity"
-        FROM "Product" p
-        LEFT JOIN "Inventory" i ON p.id = i."productId"
+        FROM "products" p
+        LEFT JOIN "inventory" i ON p.id = i."productId"
         WHERE p.id = $1
       `, [id])
 
@@ -216,7 +216,7 @@ export async function DELETE(
     
     // Verificar se o produto existe
     const existingProductResult = await client.query(
-      'SELECT id FROM "Product" WHERE id = $1',
+      'SELECT id FROM "products" WHERE id = $1',
       [id]
     )
 
@@ -229,7 +229,7 @@ export async function DELETE(
 
     // Verificar se há vendas associadas ao produto
     const salesCountResult = await client.query(
-      'SELECT COUNT(*) FROM "SaleItem" WHERE "productId" = $1',
+      'SELECT COUNT(*) FROM "sale_items" WHERE "productId" = $1',
       [id]
     )
 
@@ -243,7 +243,7 @@ export async function DELETE(
     }
 
     // Excluir produto (o estoque será excluído automaticamente por cascade)
-    await client.query('DELETE FROM "Product" WHERE id = $1', [id])
+    await client.query('DELETE FROM "products" WHERE id = $1', [id])
 
     return NextResponse.json(
       { message: "Produto excluído com sucesso" },
