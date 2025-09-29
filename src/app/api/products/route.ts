@@ -167,8 +167,8 @@ export async function POST(request: NextRequest) {
       // Criar estoque para todos os produtos (apenas UNIT por enquanto)
       if (true) {
         await client.query(`
-          INSERT INTO "inventory" (id, "productId", quantity, "minQuantity", "maxQuantity", "createdAt", "updatedAt")
-          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+          INSERT INTO "inventory" (id, "productId", quantity, "minQuantity", "maxQuantity", "lastUpdated")
+          VALUES ($1, $2, $3, $4, $5, NOW())
         `, [
           `inventory-${Date.now()}`,
           product.id,

@@ -57,7 +57,7 @@ export async function PUT(
     // Atualizar o estoque
     const result = await client.query(`
       UPDATE "inventory" 
-      SET quantity = $1, "updatedAt" = NOW()
+      SET quantity = $1, "lastUpdated" = NOW()
       WHERE "productId" = $2
       RETURNING *
     `, [quantity, id])
@@ -85,8 +85,7 @@ export async function PUT(
       quantity: inventory.quantity,
       minQuantity: inventory.minQuantity,
       maxQuantity: inventory.maxQuantity,
-      createdAt: inventory.createdAt,
-      updatedAt: inventory.updatedAt,
+      lastUpdated: inventory.lastUpdated,
       product: {
         id: inventory.productId,
         name: inventory.name,

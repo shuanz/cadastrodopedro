@@ -29,8 +29,7 @@ export async function GET() {
       quantity: row.quantity,
       minQuantity: row.minQuantity,
       maxQuantity: row.maxQuantity,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
+      lastUpdated: row.lastUpdated,
       product: {
         id: row.productId,
         name: row.name,
