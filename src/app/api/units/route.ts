@@ -21,7 +21,7 @@ export async function GET() {
   try {
     const result = await client.query(`
       SELECT u.*, COUNT(p.id) as product_count
-      FROM "Unit" u
+      FROM "units" u
       LEFT JOIN "Product" p ON u.id = p."unitId"
       GROUP BY u.id
       ORDER BY u.name ASC
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar se já existe uma unidade com o mesmo nome ou símbolo
     const existingUnit = await client.query(
-      'SELECT id FROM "Unit" WHERE name = $1 OR symbol = $2',
+      'SELECT id FROM "units" WHERE name = $1 OR symbol = $2',
       [name.trim(), symbol.trim()]
     )
 
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     const unitId = `unit-${Date.now()}`
     
     const result = await client.query(`
-      INSERT INTO "Unit" (id, name, symbol, description, "isActive", "createdAt", "updatedAt")
+      INSERT INTO "units" (id, name, symbol, description, "isActive", "createdAt", "updatedAt")
       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
       RETURNING *
     `, [unitId, name.trim(), symbol.trim(), description?.trim() || null, true])

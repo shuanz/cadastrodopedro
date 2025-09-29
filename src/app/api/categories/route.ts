@@ -21,7 +21,7 @@ export async function GET() {
   try {
     const result = await client.query(`
       SELECT c.*, COUNT(p.id) as product_count
-      FROM "Category" c
+      FROM "categories" c
       LEFT JOIN "Product" p ON c.id = p."categoryId"
       GROUP BY c.id
       ORDER BY c.name ASC
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar se já existe uma categoria com o mesmo nome
     const existingCategory = await client.query(
-      'SELECT id FROM "Category" WHERE name = $1',
+      'SELECT id FROM "categories" WHERE name = $1',
       [name.trim()]
     )
 
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     const categoryId = `category-${Date.now()}`
     
     const result = await client.query(`
-      INSERT INTO "Category" (id, name, description, "isActive", "createdAt", "updatedAt")
+      INSERT INTO "categories" (id, name, description, "isActive", "createdAt", "updatedAt")
       VALUES ($1, $2, $3, $4, NOW(), NOW())
       RETURNING *
     `, [categoryId, name.trim(), description?.trim() || null, true])
