@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gerenciar Produtos</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4f46e5;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .controls {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .btn:hover {
+            background: #4338ca;
+        }
+        .btn-danger {
+            background: #dc2626;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        .products-table {
+            background: #2d2d2d;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #404040;
+        }
+        th {
+            background: #374151;
+            font-weight: 600;
+        }
+        tr:hover {
+            background: #374151;
+        }
+        .status-active {
+            color: #10b981;
+        }
+        .status-inactive {
+            color: #ef4444;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #9ca3af;
+        }
+        .error {
+            background: #dc2626;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #10b981;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .delete-btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .delete-btn:hover {
+            background: #b91c1c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗑️ Admin - Gerenciar Produtos</h1>
+        
+        <div class="controls">
+            <button class="btn" onclick="loadProducts()">🔄 Atualizar Lista</button>
+            <button class="btn btn-danger" onclick="deleteAllProducts()">🗑️ Deletar TODOS os Produtos</button>
+        </div>
+
+        <div id="message"></div>
+        <div id="loading" class="loading" style="display: none;">Carregando produtos...</div>
+        
+        <div class="products-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Categoria</th>
+                        <th>Unidade</th>
+                        <th>Preço</th>
+                        <th>Status</th>
+                        <th>Estoque</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="productsTable">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let products = [];
+
+        async function loadProducts() {
+            const loading = document.getElementById('loading');
+            const message = document.getElementById('message');
+            
+            loading.style.display = 'block';
+            message.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/admin/products');
+                const data = await response.json();
+
+                if (data.success) {
+                    products = data.products;
+                    renderProducts();
+                    showMessage(`✅ ${data.total} produtos carregados`, 'success');
+                } else {
+                    showMessage(`❌ Erro: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Erro ao carregar produtos: ${error.message}`, 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function renderProducts() {
+            const tbody = document.getElementById('productsTable');
+            tbody.innerHTML = '';
+
+            products.forEach(product => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><code>${product.id}</code></td>
+                    <td>${product.name}</td>
+                    <td>${product.category || 'N/A'}</td>
+                    <td>${product.unit || 'N/A'}</td>
+                    <td>R$ ${product.price.toFixed(2)}</td>
+                    <td class="${product.isActive ? 'status-active' : 'status-inactive'}">
+                        ${product.isActive ? '✅ Ativo' : '❌ Inativo'}
+                    </td>
+                    <td>${product.inventory.quantity} (min: ${product.inventory.minQuantity})</td>
+                    <td>
+                        <button class="delete-btn" onclick="deleteProduct('${product.id}', '${product.name}')">
+                            🗑️ Deletar
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function deleteProduct(productId, productName) {
+            if (!confirm(`Tem certeza que deseja deletar o produto "${productName}"?\n\nEsta ação não pode ser desfeita!`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/products', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ productId })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(`✅ ${data.message}`, 'success');
+                    loadProducts(); // Recarregar lista
+                } else {
+                    showMessage(`❌ Erro: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Erro ao deletar produto: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteAllProducts() {
+            if (!confirm('⚠️ ATENÇÃO: Você está prestes a deletar TODOS os produtos!\n\nEsta ação não pode ser desfeita!\n\nTem certeza?')) {
+                return;
+            }
+
+            if (!confirm('⚠️ ÚLTIMA CONFIRMAÇÃO: Deletar TODOS os produtos?')) {
+                return;
+            }
+
+            const message = document.getElementById('message');
+            message.innerHTML = '🗑️ Deletando todos os produtos...';
+
+            let deletedCount = 0;
+            let errorCount = 0;
+
+            for (const product of products) {
+                try {
+                    const response = await fetch('/api/admin/products', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ productId: product.id })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        deletedCount++;
+                    } else {
+                        errorCount++;
+                        console.error(`Erro ao deletar ${product.name}:`, data.error);
+                    }
+                } catch (error) {
+                    errorCount++;
+                    console.error(`Erro ao deletar ${product.name}:`, error);
+                }
+            }
+
+            if (deletedCount > 0) {
+                showMessage(`✅ ${deletedCount} produtos deletados com sucesso!`, 'success');
+            }
+            if (errorCount > 0) {
+                showMessage(`❌ ${errorCount} produtos não puderam ser deletados.`, 'error');
+            }
+
+            loadProducts(); // Recarregar lista
+        }
+
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.innerHTML = text;
+            message.className = type;
+        }
+
+        // Carregar produtos ao iniciar
+        loadProducts();
+    </script>
+</body>
+</html>
