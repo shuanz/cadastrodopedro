@@ -42,6 +42,9 @@ export default function SalesPage() {
     total: number
     discount: number
     createdAt: string
+    user: {
+      name: string
+    }
     items: Array<{
       id: string
       product: {
