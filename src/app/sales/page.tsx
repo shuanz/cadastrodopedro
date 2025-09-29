@@ -8,6 +8,7 @@ import DirectPrint from "@/components/DirectPrint"
 import SilentPrint from "@/components/SilentPrint"
 import AutoPrint from "@/components/AutoPrint"
 import FractionedTicketPrint from "@/components/FractionedTicketPrint"
+import IndividualTicketPrint from "@/components/IndividualTicketPrint"
 
 interface Product {
   id: string
@@ -61,6 +62,7 @@ export default function SalesPage() {
   const [showSilentPrint, setShowSilentPrint] = useState(false)
   const [showAutoPrint, setShowAutoPrint] = useState(false)
   const [showFractionedTickets, setShowFractionedTickets] = useState(false)
+  const [showIndividualTickets, setShowIndividualTickets] = useState(false)
   const [fractionedTickets, setFractionedTickets] = useState<Array<{
     id: string
     saleItemId: string
@@ -206,12 +208,13 @@ export default function SalesPage() {
         }
         
         if (printOnly) {
-          // Apenas imprimir, sem mostrar modal
-          console.log("Executando impressão automática")
-          setShowAutoPrint(true)
+          // Imprimir tickets individuais (um por unidade vendida)
+          console.log("Executando impressão de tickets individuais")
+          setShowIndividualTickets(true)
           setShowTicket(false) // Garantir que o modal não apareça
           setShowDirectPrint(false) // Garantir que a impressão direta não execute
           setShowSilentPrint(false) // Garantir que a impressão silenciosa não execute
+          setShowAutoPrint(false) // Garantir que a impressão automática não execute
         } else {
           // Mostrar modal normalmente
           console.log("Executando venda com modal")
@@ -485,17 +488,17 @@ export default function SalesPage() {
           </>
         )}
 
-        {/* Fractioned Tickets Print Component */}
-        {showFractionedTickets && lastSale && fractionedTickets.length > 0 && (
+        {/* Individual Tickets Print Component */}
+        {showIndividualTickets && lastSale && (
           <>
-            {console.log("Renderizando FractionedTicketPrint")}
-            <FractionedTicketPrint
+            {console.log("Renderizando IndividualTicketPrint")}
+            <IndividualTicketPrint
               sale={lastSale}
-              tickets={fractionedTickets}
-              onComplete={() => setShowFractionedTickets(false)}
+              onComplete={() => setShowIndividualTickets(false)}
             />
           </>
         )}
+      </div>
     </div>
   )
 }
